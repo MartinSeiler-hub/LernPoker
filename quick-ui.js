@@ -189,8 +189,11 @@ function init(){
   input.value=digits(input.value);
   const v=tenth(input.value);
   $('bb-caption').textContent=Number.isFinite(v)?decimal(v)+' BB':'– BB';
-  for(const s of states.values())if(!s.customStack){s.stack=Math.round(Math.max(0.1,v||20)*10);if(s.action==='allin')s.bet=s.stack;}
-  renderSeatRows();syncScenario();
+  for(const pos of seats()){
+   const old=seatStacks.get(pos);
+   if(pos!==heroPos.value&&(!old||!old.custom))setStack(pos,Math.max(.1,v||20),false);
+  }
+  renderStacks();renderSeatRows();syncScenario();
  }
  $('quick-bb').addEventListener('input',updateBb);
  $('quick-bb').addEventListener('blur',()=>{if(!Number.isFinite(heroBB())||heroBB()<=0){$('quick-bb').value='200';updateBb()}});
@@ -216,7 +219,7 @@ function init(){
    return;
   }
   for(const pos of positions){
-   const s=getState(side,pos);
+   const s=getState(side,pos);s.stack=Math.round(getStack(pos)*10);
    const card=el('div','quick-seat quick-seat-inline','');card.dataset.seat=pos;
    const row=el('div','quick-seat-line','');
    const position=el('strong','quick-seat-position',pos);
@@ -261,8 +264,9 @@ function init(){
     const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
     stack.addEventListener('input',()=>{
      stack.value=digits(stack.value);s.stack=Number(stack.value);s.customStack=true;
+     const next=tenth(stack.value);if(Number.isFinite(next)&&next>=.1)setStack(pos,next,true);
      if(s.action==='allin')s.bet=s.stack;
-     stackValue.textContent=decimal(s.stack/10)+' BB';syncScenario();
+     stackValue.textContent=decimal(s.stack/10)+' BB';renderStacks();syncScenario();
     });
     stackGroup.append(stack,stackValue);fields.append(stackGroup);
     card.append(fields);
@@ -298,7 +302,7 @@ function init(){
   $('heroChips').value=String(Math.max(1,Math.round(stack*lvl)));
   const before=mode==='before',side=modeSide();
   const positions=applicableSeats();
-  const involved=positions.map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
+  const involved=positions.map(pos=>({pos,...getState(side,pos),stack:mask(getStack(pos))})).filter(s=>s.action!=='fold');
   const ownRaise=tenth($('quick-own-bet').value)||2.2;
   const prior=involved.filter(s=>s.action==='raise'||s.action==='allin');
   let problem='',next='RFI',vPos='',vStack=stack,vBet=2.2;
@@ -326,16 +330,20 @@ function init(){
   $('villainChips').value=String(Math.max(1,Math.round(vStack*lvl)));
   $('openBB').value=String(Math.max(1.5,before?vBet:ownRaise));
   $('threebetBB').value=String(Math.max(3.5,vBet));
+  const completeStacks=Object.fromEntries(seats().filter(x=>x!==hero).map(pos=>[pos,getStack(pos)]));
   const scenario=involved.length?{
    mode:before?'before':'after',
    heroStackBB:stack,
    ownRaiseBB:before?0:ownRaise,
+   seatStacks:completeStacks,
    actions:involved.map(x=>({
     position:x.pos,action:x.action,
     betBB:x.bet/10,stackBB:x.stack/10
    }))
   }:null;
   window.LernPokerScenario=null;
+  window.LernPokerTrainingState={mode:before?'before':'after',heroStackBB:stack,seatStacks:completeStacks,scenario,
+    cards:[{rank:cardRanks[0],suit:cardSuits[0]},{rank:cardRanks[1],suit:cardSuits[1]}]};
   if(!problem&&scenario){
    try{
     if(!window.LernPokerMultiway)throw Error('Mehrspieler-Rechenmodul ist nicht geladen.');
@@ -353,16 +361,16 @@ function init(){
  }
  // Profilwahl und Einstellungswechsel synchron halten.
  $('level').addEventListener('change',syncScenario);
- $('players').addEventListener('change',()=>{renderPositions();renderSeatRows();syncScenario()});
+ $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
  $('heroChips').addEventListener('change',()=>{$('quick-bb').value=mask(Number($('heroChips').value)/ownBB());updateBb()});
- $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();renderPositions();renderSeatRows();syncScenario()});
+ $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();renderPositions();renderStacks();renderSeatRows();syncScenario()});
  // Die Oberfläche bleibt kompakt; die ursprünglichen Felder sind in "Weitere Angaben".
  new MutationObserver(()=>{if(!form.hidden)form.hidden=true}).observe(form,{attributes:true,attributeFilter:['hidden']});
  nav.addEventListener('click',()=>setTimeout(()=>{form.hidden=true},0));
  form.hidden=true;
  const stored=(()=>{try{return localStorage.getItem(FORMAT_KEY)}catch(_){return null}})();
  if(stored&&D.profiles[stored])setProfile(stored);
- else {renderPositions();renderSeatRows();updateCards();syncScenario();showSetup();}
+ else {renderPositions();renderStacks();renderSeatRows();updateCards();syncScenario();showSetup();}
 }
 window.addEventListener('DOMContentLoaded',init);
 })();
