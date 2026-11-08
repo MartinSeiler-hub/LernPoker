@@ -15,3 +15,7 @@ Die mobile Lernapp basiert auf einem vereinfachten Chip-EV-Modell mit den drei T
 5. Android: In Chrome öffnen, Menü → „App installieren“ oder „Zum Startbildschirm hinzufügen“, App einmal vollständig laden, Offline-Test im Flugmodus.
 
 Ohne GitHub-Pages-Aktivierung ist der Quellcode zwar im Repository, aber die App-URL noch nicht erreichbar. Die Daten werden lokal verarbeitet; keine Pokerplattform-Schnittstelle.
+
+## Bedienung auf dem Handy (Version 2)
+
+Beim ersten Start wird einmalig das Turnierprofil A, B oder C ausgewählt und lokal gespeichert. Danach ist die Standardansicht bewusst kompakt: eigener Stack in **BB mit einer Nachkommastelle** (Komma oder Punkt), zwei Karten mit einzeln wählbarem Rang und Symbol, eigene Position und vorherige Aktion. Blindlevel, Gegnerstack und ICM-Optionen sind unter **Weitere Angaben** verfügbar. Die Turnierformat-Auswahl ist später nur über **⚙ Turnierformat ändern** im Kopfbereich erreichbar. Die Eingabe der BB wird automatisch in Chips umgerechnet, mit dem eingestellten Blindlevel als Bezugsgröße. Ohne angegebenen Gegnerstack wird derselbe Stack wie bei Hero angenommen. Die App und beide neuen UI-Dateien werden durch den Service Worker für Offline-Lernen gespeichert.
