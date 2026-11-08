@@ -71,3 +71,46 @@
  #bb-caption{min-width:96px;font-size:15px}
  .quick-rank-buttons button{font-size:15px}
 }
+
+
+/* V4: vier Kartensymbole und reduzierte Lernansicht */
+#quick-suits.quick-suit-buttons{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+  margin-top:10px;
+}
+#quick-suits .quick-suit-choice{
+  min-height:61px;
+  font-size:31px;
+  font-weight:800;
+  padding:5px;
+  line-height:1;
+  border-radius:12px;
+}
+#quick-suits .quick-suit-choice.active{
+  background:#b77b25;
+  border:2px solid #ffda8c;
+  color:#141a26;
+}
+#quick-suits .quick-suit-choice.quick-red-suit{color:#ff8790}
+#quick-suits .quick-suit-choice.active.quick-red-suit{color:#4a101c}
+#quick-suits .quick-suit-choice:disabled{opacity:.27;cursor:not-allowed}
+#quick-card-display .quick-red-suit:not(.quick-current){color:#ff8790}
+#quick-card-display .quick-current.quick-red-suit{color:#4a101c}
+.quick-methodology{
+  border-top:1px solid #415670;
+  margin-top:16px;
+  padding-top:9px;
+  color:#a9bbd2;
+  font-size:12px;
+}
+.quick-methodology summary{cursor:pointer}
+.quick-methodology p{line-height:1.5}
+.container > header .sub,
+.container > header .badges,
+.panel.accent #hand-note{display:none!important}
+@media(max-width:380px){
+ #quick-suits.quick-suit-buttons{gap:6px}
+ #quick-suits .quick-suit-choice{min-height:55px;font-size:27px}
+}
