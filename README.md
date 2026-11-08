@@ -83,3 +83,22 @@ Die Funktion ist für den ausdrücklich vereinbarten **privaten Pokerabend ohne 
 ### Nächste wissenschaftliche Validierung
 
 Die jeweilige gemischte Rangetabelle und der EV-Regret müssen durch echte 6-Max-Preflop-Solverstrategien bei den relevanten effektiven Stacks und Antes ersetzt oder gegen solche Strategien kalibriert werden. Erst mit Solverreferenzen und Best-Response-/Regret-Tests lässt sich die angestrebte GTO-Nähe sinnvoll messen.
+
+
+## LiveTest – privater 6-Max-Tisch (V10)
+
+Der zusätzliche Reiter **LiveTest** ist für einen Pokerabend **ohne Geld** und mit Einverständnis der beteiligten Freunde vorgesehen. Dieselben schnellen Eingabefelder für Karten, Positionen, Stacks und Aktionen werden wiederverwendet, ohne eine doppelte Dateneingabe.
+
+**Ablauf je Hand:**
+
+1. 6-Max auswählen; Hand, eigene Position, Stackgrößen und vorherige Aktionen erfassen.
+2. **„Empfehlung einmal ziehen und fixieren“** tippen. Die App berechnet den gemischten 6-Max-Trainingsvorschlag und zieht genau eine Aktion samt gegebenenfalls konkreter Raisehöhe. Die Ziehung wird unmittelbar lokal gespeichert.
+3. Während diese Hand fixiert ist, sind die normalen Eingabefelder im LiveTest gesperrt. Die gezogene Aktion bleibt oben fest sichtbar und **kann nicht erneut gezogen werden**; alternative Aktionen werden lediglich mit ihren Modellgewichten gezeigt.
+4. Nach dem tatsächlichen Spiel die gespielte Aktion, gegebenenfalls die Raisehöhe, das Ergebnis, optional den Gewinn/Verlust in BB und eine kurze Notiz angeben.
+5. **„Hand abschließen und speichern“** protokolliert die Daten. Ein Abbruch wird ebenfalls als solcher erfasst und nicht stillschweigend entfernt. Danach kann eine neue Hand vorbereitet werden.
+
+**Teststatistik und Export:** Anzahl abgeschlossener Hände, Übereinstimmung mit der gezogenen Empfehlung, Bluffempfehlungen und die Summe der ausdrücklich eingetragenen BB-Ergebnisse. Bis zu 1.000 lokale Datensätze bleiben im Browser gespeichert. Der Verlauf kann als semikolongetrennte CSV in die Zwischenablage kopiert werden; bei fehlender Clipboard-Berechtigung erscheint ein manuell kopierbares Textfeld. Verlaufsdaten werden weder an einen Pokeranbieter noch an einen anderen Server gesendet.
+
+**Wichtige Grenzen:** Die 6-Max-Mischfrequenzen sind derzeit ein heuristischer EV-Trainingsmix und **keine durch einen Solver bestätigten GTO-Frequenzen**. Live-Ergebnisse weniger Hände können weder GTO-Nähe noch eine überlegene Strategie beweisen; Gegner, Positionen und Blattverteilungen ändern sich ständig. Eine aussagefähige Untersuchung benötigt viele Hände, ein konsistentes Protokoll und einen unabhängigen Solver-Benchmark. Das Programm setzt keine Aktionen selbst am Tisch um.
+
+Die Touch-Eingabe und die bereits geladenen Rechenfunktionen sind nach Installation der PWA offline verwendbar. Für die Persistenz von Verlauf und fixierter Empfehlung muss der Browser lokale Speicherung zulassen.
