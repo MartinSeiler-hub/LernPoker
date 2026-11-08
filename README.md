@@ -16,13 +16,13 @@ Die mobile Lernapp basiert auf einem vereinfachten Chip-EV-Modell mit den drei T
 
 Ohne GitHub-Pages-Aktivierung ist der Quellcode zwar im Repository, aber die App-URL noch nicht erreichbar. Die Daten werden lokal verarbeitet; keine Pokerplattform-Schnittstelle.
 
-## Bedienung auf dem Handy (Version 4)
+## Bedienung auf dem Handy (Version 5)
 
 - Beim ersten Start einmal Turnierprofil A, B oder C wählen; die Auswahl wird gespeichert.
 - **Position direkt antippen:** UTG, HJ, CO, BTN, SB, BB usw. Kein Dropdown mehr für die eigene Position.
 - **Stack in Zehntel-BB:** Nur Ziffern eingeben. Die letzte Stelle steht automatisch hinter dem Komma: `154` = 15,4 BB, `800` = 80,0 BB. Die App zeigt den formatierten Wert daneben und rechnet intern in Chips um.
 - **Starthand mit vier Farbbuttons:** Für Karte 1 und Karte 2 jeweils Rang wählen und dann eine der vier Farben `♠ ♥ ♦ ♣` antippen. Die aktive Karte ist hervorgehoben; nach der Farbwahl für Karte 1 wird Karte 2 ausgewählt. Die App bildet daraus die 169 Starthandklassen (Paar, suited, offsuit), verhindert physisch doppelte Karten und synchronisiert die Matrix.
-- **Aktionen je Position:** `Alle folden`, `Aktionen vor mir` oder `Nach meinem Raise`. Nach Auswahl einer Position Fold, Call/Limp, Raise/3-Bet oder All-in wählen. Bei aktiven Spielern Gesamteinsatz und Startstack in BB (ebenfalls Zehntel-BB-Eingabe) erfassen.
+- **Gegneraktionen direkt und ohne Ausklappen:** Unter `Vor meiner Entscheidung` erscheinen alle Positionen vor Hero als ständig sichtbare Zeilen mit den Tasten `Fold`, `Call`, `Raise`, `All-in`. `Nach meinem Raise` zeigt dieselben direkten Tasten für die Spieler hinter Hero (Raise wird 3-Bet). Sobald eine andere Aktion als Fold gewählt wurde, erscheinen direkt in der Zeile die Eingabefelder für Gesamteinsatz und Stack in Zehntel-BB. `Alle folden` setzt die Aktionen auf Fold zurück und wechselt in die Eröffnungssituation. Gibt es noch keine Aktion vor Hero, ist der Fall automatisch RFI – eine separate Umschaltung ist nicht mehr nötig.
 - **Modellgrenze:** Die bisherige mathematische Engine wertet nur einen aktiven Heads-up-Gegner aus. Für mehrere eingestiegene Spieler, Limp-Pots, 3-Bet-All-ins nach eigenem Open und komplexere Raise-Folgen zeigt die App ausdrücklich **keine verlässliche Empfehlung**, statt solche Szenarien fälschlich als Heads-up zu bewerten. Das reine Erfassen dieser Situationen ist bereits möglich.
 - Blindlevel, Spielerzahl, ICM und Gegnermodell befinden sich weiterhin unter **Weitere Angaben**.
 - Über `⚙ Turnierformat ändern` lässt sich das Profil später wechseln.
