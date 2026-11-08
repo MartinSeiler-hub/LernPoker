@@ -308,3 +308,8 @@
  #live-entry-shell{padding:10px 7px}
  #live-entry-shell #quick-picker{padding:9px 7px}
 }
+
+#live-new-hand{display:block;width:100%;min-height:48px;margin:8px 0 12px;
+ background:#674a25;border:1px solid #d4a35b;color:#fff6e7;
+ font:750 13px system-ui;border-radius:9px;cursor:pointer}
+#live-new-hand:focus-visible{outline:3px solid #ffdf97;outline-offset:2px}
