@@ -381,6 +381,11 @@
 .live-seat-stack{min-width:0;min-height:38px;padding:3px 0;border:1px solid #6988a9;border-radius:6px;background:#203b57;color:#ffdf9c;font:750 12px system-ui;white-space:nowrap;cursor:pointer;touch-action:manipulation}
 .live-hero-seat{border-color:#d5a45e;background:#293026}
 .live-seat-pending{font:12px system-ui;color:#a9bfd5;padding-left:5px}
+.live-mode .live-raise-presets{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin-top:4px}
+.live-raise-presets button{min-width:0;min-height:38px;padding:4px 1px;border:1px solid #6988a9;border-radius:6px;background:#203b57;color:#edf5ff;font:700 12px system-ui;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.live-raise-presets button.active{background:#d49b43;border-color:#ffdc90;color:#101b2a}
+.live-raise-presets button:disabled{opacity:.3;cursor:not-allowed}
+.live-raise-presets button:focus-visible{outline:3px solid #ffe0a2;outline-offset:1px}
 .live-mode .quick-seat-inline .quick-seat-numbers{margin-top:4px;gap:5px}
 .live-mode .quick-seat-inline .quick-seat-numbers{margin-left:46px}
 .live-mode .quick-seat-inline .quick-seat-numbers label{display:grid;grid-template-columns:1fr 64px 58px;gap:5px;align-items:center;font-size:11px}

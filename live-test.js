@@ -5,6 +5,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const KEY='LernPokerLiveTestV1';
+const VIEW_KEY='LernPokerLiveViewV1';
 const ACTIONS={FOLD:'Fold',CHECK:'Check',CALL:'Call',LIMP:'Limp',RAISE:'Raise','3BET':'3-Bet','4BET':'4-Bet',JAM:'All-in'};
 const numeric=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 const isRaise=a=>['RAISE','3BET','4BET','JAM'].includes(a);
@@ -313,10 +314,18 @@ function init(){
   tab=nav.querySelector('button.active')?.dataset.tab||'trainer';render();
  },0));
  global.addEventListener('lernpoker:tabchange',e=>{
-  tab=e?.detail?.tab||'trainer';render();
+  tab=e?.detail?.tab||'trainer';
+  try{
+   if(tab==='live')global.sessionStorage.setItem(VIEW_KEY,'live');
+   else global.sessionStorage.removeItem(VIEW_KEY);
+  }catch(_){}
+  render();
  });
  tab=nav.querySelector('button.active')?.dataset.tab||'trainer';
- render();
+ let resumeLive=false;
+ try{resumeLive=global.sessionStorage.getItem(VIEW_KEY)==='live';}catch(_){}
+ if(resumeLive)nav.querySelector('[data-tab="live"]').click();
+ else render();
 }
 global.LernPokerLiveTest={getSnapshot:()=>data.active,getHistory:()=>data.history.slice(),lock,save,csv};
 global.addEventListener('DOMContentLoaded',init);

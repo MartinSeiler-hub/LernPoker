@@ -301,6 +301,35 @@ function init(){
   });
   $('quick-own-raise').hidden=mode!=='after';
  }
+ function renderRaisePresets(){
+  const side=modeSide(),positions=applicableSeats();
+  const profile=D.profiles[$('profile').value];
+  const level=profile.levels.find(l=>l.level===Number($('level').value))||profile.levels[0];
+  const ante=level.ante/level.bb;
+  for(const box of $('quick-seats').querySelectorAll('.live-raise-presets')){
+   const pos=box.closest('[data-seat]').dataset.seat,s=getState(side,pos);
+   let previous=side==='after'?(tenth($('quick-own-bet').value)||2.2):1;
+   for(const earlier of positions.slice(0,positions.indexOf(pos))){
+    const state=getState(side,earlier);
+    if(state.action==='raise')previous=Math.max(previous,state.bet/10);
+    if(state.action==='allin')previous=Math.max(previous,getStack(earlier)-ante);
+   }
+   // Input shortcuts only: the strategy and the manually entered amount stay unchanged.
+   const values=previous>1?[2,2.5,3,3.5,4,5].map(factor=>Math.round(previous*factor*10)/10):[2,2.2,2.5,3,4,5];
+   box.replaceChildren();
+   for(const value of values){
+    const label=value.toLocaleString('de-DE');
+    const b=el('button','',''+label+' BB');b.type='button';b.dataset.raiseBb=String(value);
+    b.setAttribute('aria-label',pos+': Raise auf '+label+' BB');
+    const chosen=Number(s.bet)===Math.round(value*10);
+    b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));
+    b.disabled=!Number.isFinite(value)||value<=previous||value>=getStack(pos)-ante-1e-6;
+    b.title=b.disabled?'Nicht als Raise verfügbar – Stack prüfen oder All-in wählen.':'Gesamteinsatz auf '+label+' BB';
+    b.addEventListener('click',()=>{s.bet=Math.round(value*10);renderSeatRows();syncScenario();});
+    box.append(b);
+   }
+  }
+ }
  function renderSeatRows(){
   markMode();
   const box=$('quick-seats');box.innerHTML='';
@@ -342,6 +371,10 @@ function init(){
     choices.append(b);
    }
    row.append(position,liveStackButton(pos),choices);card.append(row);
+   if(s.action==='raise'){
+    const presets=el('div','live-only live-raise-presets','');
+    presets.setAttribute('role','group');presets.setAttribute('aria-label',pos+' Raise auf BB');card.append(presets);
+   }
    if(s.action!=='fold'){
     const fields=el('div','quick-seat-numbers','');
     if(s.action!=='allin'){
@@ -351,7 +384,7 @@ function init(){
      const betValue=el('span','quick-digits-value',decimal(s.bet/10)+' BB');
      bet.addEventListener('input',()=>{
       bet.value=digits(bet.value);s.bet=Number(bet.value);
-      betValue.textContent=decimal(s.bet/10)+' BB';syncScenario();
+      betValue.textContent=decimal(s.bet/10)+' BB';renderRaisePresets();syncScenario();
      });
      betGroup.append(bet,betValue);fields.append(betGroup);
     }
@@ -372,6 +405,7 @@ function init(){
    box.append(card);
   }
   renderLiveStacks();
+  renderRaisePresets();
  }
  action.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
   mode=b.dataset.mode;renderSeatRows();syncScenario();
@@ -384,7 +418,7 @@ function init(){
  $('quick-own-bet').addEventListener('input',()=>{
   $('quick-own-bet').value=digits($('quick-own-bet').value);
   $('quick-own-value').textContent=decimal(tenth($('quick-own-bet').value)||0)+' BB';
-  syncScenario();
+  renderRaisePresets();syncScenario();
  });
  function blocked(message){
   currentStatus=message;accent.classList.toggle('quick-blocked',Boolean(message));
@@ -460,7 +494,7 @@ function init(){
     'Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
  }
  // Profilwahl und Einstellungswechsel synchron halten.
- $('level').addEventListener('change',syncScenario);
+ $('level').addEventListener('change',()=>{renderRaisePresets();syncScenario()});
  $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
  $('heroChips').addEventListener('change',()=>{$('quick-bb').value=mask(Number($('heroChips').value)/ownBB());updateBb()});
  $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();renderPositions();renderStacks();renderSeatRows();syncScenario()});
