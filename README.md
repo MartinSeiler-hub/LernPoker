@@ -51,3 +51,18 @@ Die Positionszeilen fließen in die Empfehlung ein. Das neue Modul \`multiway-en
 Die Engine liefert für jede Lage eine 169-Hand-Matrix mit einer **modellierten Entscheidung und geschätzten Chip-EV-Werten**. RFI ohne eingestiegene Gegner verwendet weiterhin das bisherige Modell. Der ICM-Rechner bleibt separat; Multiway-Entscheidungen sind derzeit ausschließlich Chip-EV.
 
 Alle Änderungen werden anhand der Formeln und plausibler Beispielszenarien geprüft. Ein vollständiger GTO-Solver- oder Langzeitsimulationstest liegt nicht vor.
+
+
+## Handy-Lernmodus V7: Chip-EV, Stacks, Raisehöhen und Stimme
+
+Die normale Lernoberfläche konzentriert sich vorerst **nur auf Preflop-Chip-EV**. Die Preisgeldverteilung, Entries, Preispool und ICM werden nicht angezeigt und nicht in die Chip-EV-Handentscheidung eingerechnet. Der frühere ICM-Code bleibt als getrennte spätere Erweiterung in der Codebasis erhalten.
+
+- **Feststehende Empfehlung statt Reiterleiste:** Die aktuelle Kartenkombination und die Aktion (z. B. „3-Bet auf 7,5 BB“) bleiben beim Scrollen sichtbar. Die Reiter „Empfehlung“, „169 Hände“ und „Lernen“ sind weiterhin erreichbar, aber nicht mehr fixiert.
+- **Stacks für jede Position:** Die Stackgrößen aller anderen am Tisch sitzenden Positionen lassen sich jederzeit in einem kompakten Tasten-/Ziffernraster eingeben. Das gilt auch für momentan noch nicht beteiligte Spieler. Die letzte eingegebene Ziffer gilt wie bisher als Zehntel-BB (\`154\` → 15,4 BB). Werte in den Aktionszeilen und im Stackraster werden synchronisiert.
+- **Raisehöhe:** Bei einer vom Modell vorgeschlagenen Erhöhung werden Raisegrößen von 33 %, 50 %, 75 % und 100 % des Pots (nach Ausgleich des aktuellen Einsatzes) auf rechtlich zulässige Minimum-Raises und effektive Stacks geprüft. Die Engine berechnet einen **modellierten** Chip-EV für jede zulässige Variante; in der Empfehlung steht die Variante mit dem höchsten geschätzten EV als Betrag in BB. Nicht zulässige Potgrößen werden gekennzeichnet. All-in-Empfehlungen zeigen den Stackbetrag.
+- **Optionale Spracheingabe:** Die Taste „🎤 Spracheingabe“ kann mit einer Browser-Spracherkennung auf Deutsch einen kurzen Diktattext erfassen. Die erkannten Werte werden in einer Vorschau angezeigt und **erst nach explizitem „Übernehmen“** in Position, Stacks, Karten und Aktionsverlauf übertragen. Alternativ ist ein manueller Text in demselben Feld möglich.
+- **Offline:** Die Touch-Eingabe und die Berechnung laufen nach Installation weiterhin offline. Die Spracherkennung kann je nach Browser/Handy einen Onlinedienst benötigen; ohne Browser-Unterstützung bleibt nur die manuelle Text-/Touch-Eingabe.
+
+**Beispieldiktat:** \`Position Button, mein Stack 15 Komma 4 BB, Ass Pik König Herz, HJ Raise auf 2 Komma 2 BB, Stack 30 BB, CO Call Stack 25.\`
+
+**Modellgrenzen:** Das „optimale“ Raise-Sizing wird **nicht** durch einen vollständigen GTO-Solver ermittelt. Die Rangewahl, zukünftige Fold-/Call-Entscheidungen, Multiway-Equities und die Postflop-Verläufe sind weiterhin vereinfachte Modelle. Die Ausgaben sind zum Lernen außerhalb laufender Online-Poker-Hände vorgesehen.
