@@ -21,10 +21,10 @@ function init(){
  const mobilePick=picker.querySelector('.mobile-pick');
  const stackBox=el('div','quick-stack','<label for="quick-bb">Mein Stack · BB</label><div class="quick-stack-line"><input id="quick-bb" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="5" aria-describedby="bb-caption bb-example" value="800"><strong id="bb-caption">80,0 BB</strong></div><small id="bb-example">Nur Ziffern: 154 ergibt 15,4 BB; 80 ergibt 8,0 BB.</small>');
  mobilePick.before(stackBox);
- const liveStacks=el('section','live-only live-stacks','<div class="live-stack-title"><h3>Stacks · BB</h3><button type="button" id="live-stack-reset">Alle = ich</button></div><div id="live-stack-ranges"></div>');
- stackBox.before(liveStacks);
+ const liveStacks=el('dialog','live-only live-stacks','<div class="live-stack-title"><h3 id="live-stack-title"></h3><button type="button" id="live-stack-close" aria-label="Stackauswahl schließen">✕</button></div><div id="live-stack-ranges"></div>');
+ liveStacks.id='live-stack-dialog';liveStacks.setAttribute('aria-labelledby','live-stack-title');picker.append(liveStacks);
  const heroPos=$('heroPos');heroPos.closest('.group').hidden=true;
- const positionBox=el('section','quick-section','<h3>Meine Position</h3><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
+ const positionBox=el('section','quick-section quick-position-section','<div class="quick-position-header"><h3>Meine Position</h3></div><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
  stackBox.after(positionBox);
  const stackPanel=el('section','quick-section quick-all-stacks',
    '<div class="quick-stack-header"><h3>Stacks der übrigen Spieler</h3><button type="button" id="quick-stack-reset">Alle = mein Stack</button></div><div id="quick-stack-grid" class="quick-stack-grid"></div>');
@@ -53,11 +53,11 @@ function init(){
    cardSuits=kind==='s'?['♠','♠']:['♠','♥'];updateCards();syncScenario();
   });suitedChoice.append(b);
  }
- liveCards.append(suitedChoice);
+ liveCards.prepend(suitedChoice);
  picker.prepend(liveCards);
  cards.classList.add('quick-original-cards');
  const action=el('section','quick-section',
-  '<div class="quick-action-header"><h3>Aktionen der Gegner</h3><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
+  '<div class="quick-action-header"><h3><span class="live-hide">Aktionen der Gegner</span><span class="live-only">Stacks &amp; Aktionen</span></h3><button type="button" id="live-stack-reset" class="live-only">Alle = ich</button><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
   '<div class="quick-mode-buttons" role="group" aria-label="Aktionsfolge"><button type="button" data-mode="before">Vor meiner Entscheidung</button><button type="button" data-mode="after">Nach meinem Raise</button></div>'+
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
@@ -82,48 +82,53 @@ function init(){
   return seatStacks.get(pos).stack/10;
  };
  function renderLiveStacks(){
-  const box=$('live-stack-ranges');
-  // Keep the exact-value field focused while typing; refresh the surrounding ranges.
-  if(box.contains(document.activeElement)&&document.activeElement.matches('input')){
-   for(const row of box.children){
-    const value=row.dataset.position===heroPos.value?heroBB():getStack(row.dataset.position);
-    const input=row.querySelector('input');if(input!==document.activeElement)input.value=String(value);
-    for(const b of row.querySelectorAll('button')){
-     const chosen=Number(b.dataset.stackValue)===value;b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));
-    }
-   }
-   return;
+  for(const b of picker.querySelectorAll('.live-seat-stack')){
+   const pos=b.dataset.position,value=getStack(pos),name=pos===heroPos.value?'Ich':pos;
+   b.textContent=value.toLocaleString('de-DE')+' BB ▾';
+   b.setAttribute('aria-label',name+' Stack: '+decimal(value)+' BB, Bereich wählen');
   }
-  box.replaceChildren();
-  for(const pos of [heroPos.value,...seats().filter(p=>p!==heroPos.value)]){
+ }
+ let editingStack=null;
+ function openLiveStack(pos){
+   editingStack=pos;
    const hero=pos===heroPos.value,value=hero?heroBB():getStack(pos),name=hero?'Ich':pos;
-   const row=el('div','live-stack-row','');row.dataset.position=pos;row.setAttribute('role','group');row.setAttribute('aria-label',name+' Stack');
-   const exact=el('label','live-stack-exact',name);
+   $('live-stack-title').textContent=name+' · Stack in BB';
+   const box=$('live-stack-ranges');box.replaceChildren();
+   const row=el('div','live-stack-presets','');
+   const exact=el('label','live-stack-exact','Exakt · BB');
    const input=el('input','');input.type='number';input.inputMode='decimal';input.min=hero?'2':'1';input.max='1000';input.step='0.1';
    input.value=Number.isFinite(value)?String(value):'';input.required=true;input.setAttribute('aria-label',name+' Stack exakt in BB');
    const apply=value=>{
     if(hero){$('quick-bb').value=mask(value);updateBb();}
     else {setStack(pos,value,true);renderStacks();renderSeatRows();syncScenario();}
+    liveStacks.close();
    };
-   input.addEventListener('input',()=>{
-    input.setCustomValidity('');
-    const value=Number(input.value);
-    if(input.value!==''&&Number.isFinite(value)&&value>=Number(input.min)&&value<=1000){apply(value);}
-    else input.setCustomValidity('Stack zwischen '+input.min+' und 1000 BB eingeben.');
-   });
-   input.addEventListener('change',()=>{if(!input.checkValidity())input.reportValidity();});
-   exact.append(input);row.append(exact);
    for(const range of LIVE_STACK_RANGES){
-    const b=el('button','',range.label);b.type='button';b.dataset.stackValue=String(range.value);
+    const b=el('button','',range.label+'<small>'+range.value+' BB</small>');b.type='button';b.dataset.stackValue=String(range.value);
     b.title=range.label+' BB → '+range.value+' BB';
     b.setAttribute('aria-label',name+': '+range.label+' BB, rechnen mit '+range.value+' BB');
     b.setAttribute('aria-pressed',String(value===range.value));
     b.classList.toggle('active',value===range.value);
     b.addEventListener('click',()=>apply(range.value));row.append(b);
    }
-   box.append(row);
-  }
+   const form=el('form','live-stack-form','');
+   const submit=el('button','','Übernehmen');submit.type='submit';
+   exact.append(input);form.append(exact,submit);box.append(row,form);
+   form.addEventListener('submit',e=>{e.preventDefault();if(input.reportValidity())apply(Number(input.value));});
+   liveStacks.showModal();
+   (row.querySelector('button.active')||row.querySelector('button')).focus();
  }
+ function liveStackButton(pos){
+  const b=el('button','live-only live-seat-stack','');b.type='button';b.dataset.position=pos;
+  b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','live-stack-dialog');
+  b.addEventListener('click',()=>openLiveStack(pos));return b;
+ }
+ $('live-stack-close').addEventListener('click',()=>liveStacks.close());
+ liveStacks.addEventListener('close',()=>{
+  $('live-stack-ranges').replaceChildren();
+  [...picker.querySelectorAll('.live-seat-stack')].find(b=>b.dataset.position===editingStack)?.focus();
+  editingStack=null;
+ });
  $('live-stack-reset').addEventListener('click',()=>$('quick-stack-reset').click());
  function setStack(pos,value,custom=true){
   if(!seats().includes(pos)||pos===heroPos.value||!Number.isFinite(value)||value<.1||value>1000)return false;
@@ -301,10 +306,16 @@ function init(){
   const box=$('quick-seats');box.innerHTML='';
   const side=modeSide(),positions=applicableSeats();
   if(positions.length===0){
-   box.append(el('p','quick-seat-empty',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
-   return;
+   box.append(el('p','quick-seat-empty live-hide',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
   }
-  for(const pos of positions){
+  for(const pos of seats()){
+   if(!positions.includes(pos)){
+    const hero=pos===heroPos.value;
+    const card=el('div','live-only quick-seat quick-seat-inline'+(hero?' live-hero-seat':''),'');card.dataset.seat=pos;
+    const row=el('div','quick-seat-line','');
+    row.append(el('strong','quick-seat-position',pos+(hero?'<small>Ich</small>':'')),liveStackButton(pos),el('span','live-seat-pending',hero?'Mein Stack':mode==='before'?'Noch dran':'Vor meinem Raise'));
+    card.append(row);box.append(card);continue;
+   }
    const s=getState(side,pos);s.stack=Math.round(getStack(pos)*10);
    const card=el('div','quick-seat quick-seat-inline','');card.dataset.seat=pos;
    const row=el('div','quick-seat-line','');
@@ -330,7 +341,7 @@ function init(){
     });
     choices.append(b);
    }
-   row.append(position,choices);card.append(row);
+   row.append(position,liveStackButton(pos),choices);card.append(row);
    if(s.action!=='fold'){
     const fields=el('div','quick-seat-numbers','');
     if(s.action!=='allin'){
@@ -360,6 +371,7 @@ function init(){
    }
    box.append(card);
   }
+  renderLiveStacks();
  }
  action.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
   mode=b.dataset.mode;renderSeatRows();syncScenario();

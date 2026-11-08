@@ -80,10 +80,15 @@ function freezeInputs(){
  // Never nest the editable controls inside the separately hidden result panel.
  if(tab==='live'&&slot&&picker.parentNode!==slot)slot.appendChild(picker);
  else if(tab!=='live'&&pickerHome?.parentNode&&picker.previousSibling!==pickerHome)pickerHome.after(picker);
+ const position=picker.querySelector('.quick-position-section'),stack=picker.querySelector('.quick-stack');
+ if(position&&stack){
+  if(tab==='live'&&picker.firstElementChild!==position)picker.prepend(position);
+  else if(tab!=='live'&&stack.nextElementSibling!==position)stack.after(position);
+ }
  if(shell)shell.hidden=tab!=='live'||freeze;
  picker.classList.toggle('live-inputs-frozen',freeze);
  picker.hidden=tab==='live'?freeze:!['trainer','matrix'].includes(tab);
- const controlList=[...picker.querySelectorAll('button,input,select,textarea'),$('change-tournament')].filter(Boolean);
+ const controlList=[...picker.querySelectorAll('button:not([data-live-max]),input,select,textarea'),$('change-tournament')].filter(Boolean);
  for(const input of controlList){
   if(freeze){
    if(!prevDisabled.has(input))prevDisabled.set(input,input.disabled);
@@ -291,6 +296,10 @@ function init(){
  shell.after(panel);
  for(const b of shell.querySelectorAll('[data-live-max]')){
   b.addEventListener('click',()=>chooseTable(Number(b.dataset.liveMax)));
+ }
+ const positionHeader=picker.querySelector('.quick-position-header');
+ if(positionHeader){
+  const format=shell.querySelector('.live-format');format.classList.add('live-only');positionHeader.append(format);
  }
  $('live-lock').addEventListener('click',lock);
  $('live-save').addEventListener('click',()=>save('completed'));
