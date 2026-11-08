@@ -75,7 +75,7 @@ function init(){
     input.value=digits(input.value);
     const n=tenth(input.value);
     display.textContent=Number.isFinite(n)?decimal(n)+' BB':'– BB';
-    if(Number.isFinite(n)&&n>=.1){setStack(pos,n,true);syncScenario();}
+    if(Number.isFinite(n)&&n>=.1){setStack(pos,n,true);renderSeatRows();syncScenario();}
    });
    input.addEventListener('blur',()=>{
     const n=tenth(input.value);
