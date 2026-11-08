@@ -2,7 +2,7 @@
 
 Die mobile Lernapp basiert auf einem vereinfachten Chip-EV-Modell mit den drei Turnierprofilen aus den Screenshots des Nutzers (8-Max mit 10.000 Startchips / 8-Min.-Blinds; 6-Max mit 10.000 Startchips / 5-Min.-Blinds und denselben Antes je Spieler; 8-Max mit 8.000 Startchips / 5-Min.-Blinds).
 
-**Funktionen:** Wahl der Turniersituation und eigener Karten; 169-Hand-Preflop-Matrix; Fold, Call, Raise, 3-Bet, All-in; Quiz mit lokaler Statistik; ICM-Rechner für 2–10 verbleibende Spieler; Offline-Cache.
+**Funktionen:** Wahl der Turniersituation und eigener Karten; 169-Hand-Preflop-Matrix; Fold, Call, Raise, 3-Bet, All-in; Quiz mit lokaler Statistik; 6-/8-Max-LiveTest und Offline-Cache. Preisgeldberechnungen und ICM sind für eine spätere Version zurückgestellt.
 
 **Modellgrenzen:** Die Aktionsentscheidungen sind keine bewiesenen GTO-Ranges. Gegner-Ranges und Equity-Realisierung sind Annahmen; das zugrunde liegende Monte-Carlo-Showdown-Modell löst keine vollständigen Postflop-Spielbäume. ICM liefert nur bei vollständig bekannten Stacks und Auszahlungen der tatsächlich verbleibenden maximal zehn Spieler eine vollständige Modellrechnung. Die Anwendung ist für das Lernen außerhalb laufender Online-Partien gedacht (keine Real-Time Assistance).
 
@@ -24,7 +24,7 @@ Ohne GitHub-Pages-Aktivierung ist der Quellcode zwar im Repository, aber die App
 - **Starthand mit vier Farbbuttons:** Für Karte 1 und Karte 2 jeweils Rang wählen und dann eine der vier Farben `♠ ♥ ♦ ♣` antippen. Die aktive Karte ist hervorgehoben; nach der Farbwahl für Karte 1 wird Karte 2 ausgewählt. Die App bildet daraus die 169 Starthandklassen (Paar, suited, offsuit), verhindert physisch doppelte Karten und synchronisiert die Matrix.
 - **Gegneraktionen direkt und ohne Ausklappen:** Unter `Vor meiner Entscheidung` erscheinen alle Positionen vor Hero als ständig sichtbare Zeilen mit den Tasten `Fold`, `Call`, `Raise`, `All-in`. `Nach meinem Raise` zeigt dieselben direkten Tasten für die Spieler hinter Hero (Raise wird 3-Bet). Sobald eine andere Aktion als Fold gewählt wurde, erscheinen direkt in der Zeile die Eingabefelder für Gesamteinsatz und Stack in Zehntel-BB. `Alle folden` setzt die Aktionen auf Fold zurück und wechselt in die Eröffnungssituation. Gibt es noch keine Aktion vor Hero, ist der Fall automatisch RFI – eine separate Umschaltung ist nicht mehr nötig.
 - **Modellgrenze:** Die bisherige mathematische Engine wertet nur einen aktiven Heads-up-Gegner aus. Für mehrere eingestiegene Spieler, Limp-Pots, 3-Bet-All-ins nach eigenem Open und komplexere Raise-Folgen zeigt die App ausdrücklich **keine verlässliche Empfehlung**, statt solche Szenarien fälschlich als Heads-up zu bewerten. Das reine Erfassen dieser Situationen ist bereits möglich.
-- Blindlevel, Spielerzahl, ICM und Gegnermodell befinden sich weiterhin unter **Weitere Angaben**.
+- Blindlevel, Spielerzahl und Gegnermodell befinden sich weiterhin unter **Weitere Angaben**.
 - Über `⚙ Turnierformat ändern` lässt sich das Profil später wechseln.
 - Das Quiz ist deaktiviert, wenn das eingegebene Szenario noch nicht durch das Modell unterstützt wird.
 
@@ -55,7 +55,7 @@ Alle Änderungen werden anhand der Formeln und plausibler Beispielszenarien gepr
 
 ## Handy-Lernmodus V8: Chip-EV, Stacks und Raisehöhen
 
-Die normale Lernoberfläche konzentriert sich vorerst **nur auf Preflop-Chip-EV**. Die Preisgeldverteilung, Entries, Preispool und ICM werden nicht angezeigt und nicht in die Chip-EV-Handentscheidung eingerechnet. Der frühere ICM-Code bleibt als getrennte spätere Erweiterung in der Codebasis erhalten.
+Die aktuelle Lernoberfläche konzentriert sich vorerst **nur auf Preflop-Chip-EV**. Die komplette frühere Sektion „4 · Preisgeld & Entries“ einschließlich ihrer Eingabefelder, Auszahlungstabelle und Update-Routine wurde aus der Web-App entfernt. ICM bleibt für eine spätere Ausbaustufe inaktiv. Vorhandene historische Turnierdaten sind weiterhin im Modell gespeichert, haben aber keinen Einfluss auf die aktuelle Handlungsempfehlung.
 
 - **Feststehende Empfehlung statt Reiterleiste:** Die aktuelle Kartenkombination und die Aktion (z. B. „3-Bet auf 7,5 BB“) bleiben beim Scrollen sichtbar. Die Reiter „Empfehlung“, „169 Hände“ und „Lernen“ sind weiterhin erreichbar, aber nicht mehr fixiert.
 - **Stacks für jede Position:** Die Stackgrößen aller anderen am Tisch sitzenden Positionen lassen sich jederzeit in einem kompakten Tasten-/Ziffernraster eingeben. Das gilt auch für momentan noch nicht beteiligte Spieler. Die letzte eingegebene Ziffer gilt wie bisher als Zehntel-BB (\`154\` → 15,4 BB). Werte in den Aktionszeilen und im Stackraster werden synchronisiert.
@@ -124,3 +124,8 @@ Der bestehende Schnell-Eingabebereich wird beim Umschalten in **LiveTest** in ei
 **Nur bei einer bereits fixierten Hand** sind die Eingaben gesperrt und ausgeblendet. Ein Hinweis über der Empfehlung erklärt dies. Mit der zusätzlichen gut sichtbaren Taste **„Fixierte Hand abbrechen und neue eingeben“** wird die aktuelle Hand mit Status „Abgebrochen“ protokolliert und die Eingabe wieder freigegeben. Alternativ kann die Hand regulär abgeschlossen und mit Ergebnis gespeichert werden. Eine fixierte Empfehlung wird weiterhin nicht neu gezogen.
 
 Diese strukturelle Änderung ist erforderlich, weil die vorherige Version die Eingabemaske in einen Bereich eingebettet hatte, dessen Sichtbarkeit unabhängig gesteuert wurde. Damit bestand das Risiko, dass LiveTest keine editierbaren Felder anzeigte. Die neue Struktur trennt Eingabe und Ergebnis ausdrücklich.
+
+
+## Bereinigung V13 – Keine Preisgeld-/Entries-Sektion
+
+Die bisherige Sektion 4 mit Preisgeldern, Entries, bezahlten Plätzen und historischer Auszahlungstabelle ist **vollständig aus dem HTML entfernt**. Die zugehörigen JavaScript-Ereignisbehandlungen, Standardwerte und die laufende Preisgeldberechnung sind ebenfalls entfernt. Der App-Start und das Umschalten zwischen Turnierprofilen benötigen diese Felder nicht mehr. Die separate ICM-Logik bleibt als nicht aktivierte spätere Ausbaustufe erhalten.
