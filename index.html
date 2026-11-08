@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#0c1527"/>
+<title>MTT Preflop-Labor · 8-Max / 6-Max · 169 Starthände</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1220;--panel:#131f33;--panel2:#192940;--line:#31435e;--txt:#edf3ff;--muted:#a9b8ce;--accent:#ffc356;--green:#39b89c;--danger:#f09dab}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(165deg,#0a1120 0%,#111e35 100%);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--txt)}
+.container{max-width:1330px;margin:auto;padding:24px 20px 68px} h1{font-size:clamp(25px,3.5vw,38px);margin:0 0 5px;color:#ffcf68}h2{font-size:21px;margin:0 0 14px;color:#fafcff}h3{font-size:16px;margin:0 0 8px}p{margin:8px 0 14px}header .sub{color:var(--muted);margin:5px 0 18px;max-width:1050px}
+.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{background:#253650;border:1px solid #455b77;border-radius:30px;padding:4px 11px;font-size:12px;font-weight:700}.badge.warn{background:#503619;border-color:#ab7538;color:#ffe2a4}.badge.good{background:#143b35;border-color:#31786b;color:#9bf6d9}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:19px;box-shadow:0 12px 35px #0003}.panel.accent{border-color:#846337}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.group{display:flex;flex-direction:column;gap:5px;min-width:0}.group label{font-size:12px;font-weight:700;letter-spacing:.025em;color:#c8d5e8}.group input,.group select,.group textarea,.icm-input{font:inherit;color:var(--txt);background:#0c192b;border:1px solid #455870;border-radius:9px;min-height:42px;padding:9px 10px;width:100%}.group select{cursor:pointer}.group select:focus,.group input:focus,.group textarea:focus{outline:2px solid #ddad58;outline-offset:1px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:15px 0 7px}.kpi{border:1px solid #34485f;background:#101b2e;padding:12px;border-radius:12px}.kpi strong{display:block;font-size:21px;color:var(--accent);line-height:1.3}.kpi span{font-size:12px;color:var(--muted)}
+.hint{border:1px solid #52627e;background:#1c2a43;padding:10px 13px;border-radius:10px;color:#d7e4f3;margin:13px 0}.hint.warn{border-color:#986c3f;background:#352a20}.hint b{color:#ffe0a9}
+.legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}.legend span{display:inline-flex;align-items:center;gap:6px;border:1px solid #374c64;padding:5px 9px;border-radius:8px;font-size:12px}.dot{width:11px;height:11px;display:inline-block;border-radius:2px}
+.grid-wrap{overflow-x:auto;padding-bottom:4px}.matrix{display:grid;grid-template-columns:repeat(13,minmax(40px,1fr));gap:3px;min-width:604px;max-width:980px;margin:auto}.cell{border:1px solid #ffffff19;border-radius:5px;aspect-ratio:1.35;max-height:66px;font-weight:800;font-size:clamp(12px,1.15vw,16px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:transform .1s,outline .1s;user-select:none}.cell:hover{outline:2px solid white;outline-offset:-2px;z-index:2;transform:scale(1.035)}.cell:focus{outline:2px solid #ffe291;outline-offset:-2px}.cell.active{outline:3px solid #ffeb91;outline-offset:-3px}.cell .tiny{position:absolute;right:3px;bottom:2px;font-size:9px;font-weight:500;opacity:.8}.cell.pair::before{content:'';position:absolute;left:4px;top:4px;width:5px;height:5px;background:#fff9;border-radius:50%}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.stat{display:flex;gap:8px;align-items:center;background:#1c2b43;border:1px solid #324a6a;border-radius:9px;padding:7px 11px}.stat b{font-size:18px}.stat small{font-size:12px;color:var(--muted)}
+.details{background:#0d1a2b;border:1px solid #3a526f;border-radius:12px;margin-top:15px;padding:15px;display:grid;grid-template-columns:1fr 1.6fr;gap:16px}.handtitle{font-size:29px;font-weight:850;color:#fff}.action{font-weight:800;font-size:17px}.kv{display:grid;grid-template-columns:auto auto;gap:3px 12px;max-width:340px;font-size:13px}.kv dt{color:#b6c5da}.kv dd{margin:0;text-align:right}.ev-grid{display:flex;flex-wrap:wrap;gap:8px}.ev-pill{padding:7px 10px;border-radius:8px;background:#1b2b43;border:1px solid #415675;font-size:12px}.ev-pill b{display:block;color:#fff;font-size:17px}.muted{color:var(--muted)}.actions-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:13px 0}.btn{background:#304563;border:1px solid #5e7794;color:#fff;padding:9px 13px;border-radius:9px;cursor:pointer;font:inherit;font-weight:700}.btn:hover{background:#3f587a}.btn.primary{background:#79551e;border-color:#c89949;color:#fff4e2}.btn:focus{outline:2px solid white}
+.table-wrap{overflow:auto;max-height:530px;border:1px solid #33485f;border-radius:10px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:right;padding:9px 10px;border-bottom:1px solid #2d4057;white-space:nowrap}td:first-child,th:first-child{text-align:left}thead th{position:sticky;top:0;background:#24354d;z-index:1}tbody tr.active{background:#3d492c;color:#ffdc83}tbody tr:hover{background:#2a3c56}input.sm{max-width:115px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}.note{font-size:13px;color:#bed0e7}details summary{cursor:pointer;font-weight:800;color:#ffe1a0}details{margin-top:10px} .error{color:#ffc2c2}
+textarea{min-height:74px;resize:vertical}.icm-form{display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:10px}.icm-result{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}.footer{font-size:12px;color:#9db2cc;border-top:1px solid #30435f;padding-top:17px;margin-top:28px}
+@media(max-width:850px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two-col,.details{grid-template-columns:1fr}.icm-form{grid-template-columns:1fr 1fr}.matrix{min-width:585px}.container{padding:16px 10px 36px}.panel{padding:15px}}
+@media(max-width:500px){.controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi strong{font-size:19px}.icm-form{grid-template-columns:1fr}.icm-result{grid-template-columns:1fr}.matrix{min-width:570px}.cell{font-size:13px}}
+@media print{body{background:white;color:#111}.panel{box-shadow:none;break-inside:avoid;border:1px solid #666}header,.hint,.actions-row,.form-panel,.extra-panel,.footer{display:none!important}.matrix{min-width:0;max-width:100%;gap:2px}.cell{print-color-adjust:exact;-webkit-print-color-adjust:exact}.details{display:none}.panel{background:white;color:#111}.grid-wrap{overflow:visible}.stats,.legend{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+<style id="mobile-learning-styles">
+:root{color-scheme:dark}html{scroll-behavior:smooth}
+.container{max-width:930px;padding:12px 12px 42px}
+header h1{font-size:24px}header .sub{font-size:12px}
+.nav-mobile{position:sticky;top:0;z-index:50;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:#101d30;padding:9px 5px;border:1px solid #455a75;border-radius:0 0 13px 13px;margin:0 0 15px}
+.nav-mobile button{padding:12px 2px;background:#243953;border:1px solid transparent;color:#e4eefa;border-radius:8px;font-size:12px;font-weight:750;min-height:44px}
+.nav-mobile button.active{background:#efbe67;color:#111c2d}
+.mobile-pick{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}.mobile-pick label{font-size:12px;color:#cedced;display:flex;flex-direction:column;gap:5px}
+.mobile-pick select{color:white;background:#101c30;border:1px solid #617792;border-radius:8px;font-size:16px;min-width:0;padding:11px;min-height:48px}
+.mobile-hand{font-size:38px;text-align:center;padding:8px;font-weight:850;color:#ffd57e}
+.quiz-card{background:#121f33;border:1px solid #3b506a;border-radius:16px;padding:17px;margin-top:14px}
+.quiz-card h2{margin-bottom:6px}.quiz-situation{font-size:13px;color:#b6c9df}.quiz-hand{font-size:48px;font-weight:900;letter-spacing:2px;color:#ffd17c;text-align:center;margin:10px 0;background:#0e192a;border-radius:11px;padding:12px}
+.quiz-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.quiz-actions button{font-size:15px;font-weight:800;color:#fff;background:#243b57;border:1px solid #597493;border-radius:11px;min-height:51px}
+.quiz-feedback{margin:12px 0;padding:10px;border-radius:8px;background:#20354f;min-height:20px}
+.quiz-card .btn{width:100%;padding:13px}
+.panel[hidden],.mobile-hide{display:none!important}
+@media(max-width:600px){
+ .container{padding:0 10px 30px}header{padding:10px 5px}.badges{display:none}
+ .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .panel{padding:13px;margin-top:11px;border-radius:13px}
+ .panel h2{font-size:17px}.group input,.group select{font-size:16px;min-height:46px}
+ .grid-wrap{overflow:visible}.matrix{min-width:0!important;width:100%;grid-template-columns:repeat(13,minmax(0,1fr));gap:2px}
+ .cell{font-size:clamp(8px,2.5vw,13px);aspect-ratio:1;max-height:none;min-width:0;border-radius:3px}
+ .stats{gap:5px}.stat{padding:5px}.stat b{font-size:13px}
+ .details{display:block;padding:12px}.kv{max-width:none}.ev-pill{font-size:12px}
+ .hint{font-size:12px}
+ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .kpi strong{font-size:18px}
+ .mobile-pick{grid-template-columns:1fr 1fr 1.3fr}
+ .mobile-pick select{font-size:14px;padding:8px 4px}
+ .two-col{display:block}
+}
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MTT Trainer">
+
+</head>
+<body><div class="container">
+<header><h1>MTT · Preflop-Labor</h1><p class="sub">Drei Turnierprofile · alle 169 Starthandklassen · Positions- und Stackgrößenmodell · Raise / 3-Bet / All-in · separates ICM-Modul</p>
+<div class="badges"><span class="badge good">Blind-, Ante- und Pot-Odds: exakt</span><span class="badge good">Heads-up-Showdown: Monte-Carlo</span><span class="badge warn">Aktionsranges: Modell, kein bewiesenes GTO</span><span class="badge">Offline nutzbar · Trainingszweck</span></div></header>
+<section class="panel form-panel"><h2>1 · Turnier und Situation einstellen</h2><div class="controls">
+<div class="group"><label for="profile">Turnierprofil</label><select id="profile"></select></div>
+<div class="group"><label for="level">Blindlevel</label><select id="level"></select></div>
+<div class="group"><label for="players">Spieler am Tisch</label><select id="players"></select></div>
+<div class="group"><label for="spot">Vorherige Aktion</label><select id="spot"><option value="RFI">Alle folden – Open</option><option value="OPEN">Gegner eröffnet – Raise</option><option value="3BET">Ich habe eröffnet – Gegner 3-bettet</option><option value="JAM">Gegner geht All-in</option></select></div>
+<div class="group"><label for="heroPos">Meine Position</label><select id="heroPos"></select></div>
+<div class="group" id="villain-wrap"><label for="villainPos">Position des Gegners</label><select id="villainPos"></select></div>
+<div class="group"><label for="heroChips">Mein Stack (Chips, vor Blinds)</label><input id="heroChips" type="number" min="1" step="100" value="8000"></div>
+<div class="group"><label for="villainChips">Gegnerstack (Chips, vor Blinds)</label><input id="villainChips" type="number" min="1" step="100" value="8000"></div>
+<div class="group" id="open-wrap"><label for="openBB">Open-Raise auf (BB)</label><input id="openBB" type="number" min="1.5" step="0.1" value="2.2"></div>
+<div class="group" id="threebet-wrap"><label for="threebetBB">3-Bet auf (BB)</label><input id="threebetBB" type="number" min="3.5" step="0.5" value="7.5"></div>
+<div class="group"><label for="opponentStyle">Gegner-Modell</label><select id="opponentStyle"><option value="normal">Ausgeglichen (Annahme)</option><option value="tight">Tight / vorsichtig</option><option value="loose">Loose / Callingstation</option></select></div>
+<div class="group"><label for="useICM">ICM bei Call gegen All-in</label><label style="display:flex;gap:9px;align-items:center;background:#0c192b;border:1px solid #455870;border-radius:9px;min-height:42px;padding:7px 9px"><input type="checkbox" id="useICM" style="width:19px;height:19px"> ICM-Szenario anwenden</label></div>
+</div>
+<div class="kpis" id="kpis"></div><div class="hint" id="model-warning"></div></section>
+<section class="panel accent"><h2>2 · Alle 169 Starthände</h2><p class="muted" id="chart-description">13×13-Handmatrix. Jede Zelle ist anklickbar.</p>
+<div class="legend" id="legend"></div><div class="grid-wrap"><div class="matrix" id="matrix" aria-label="169 Starthände"></div></div>
+<div class="stats" id="stats"></div><div class="details"><div><div class="handtitle" id="hand-name">AKs</div><div class="action" id="hand-action">RAISE</div><dl class="kv" id="hand-kv"></dl></div><div><h3>Modellierte Werte dieser Starthand</h3><div class="ev-grid" id="hand-ev"></div><p class="note" id="hand-note"></p></div></div>
+<div class="actions-row"><button class="btn primary" id="copyChart">169 Hände als CSV kopieren</button><button class="btn" id="copyText">Kompakte Handlisten kopieren</button><button class="btn" id="printChart">Matrix drucken</button></div>
+<p id="copyStatus" class="note">Die Matrix wird im Browser berechnet. Der CSV-Export lässt sich direkt in eine Tabellenkalkulation einfügen.</p><textarea id="copyFallback" style="display:none;width:100%;margin-top:10px" readonly aria-label="CSV Text zum Kopieren"></textarea>
+</section>
+<section class="panel"><h2>3 · Blindverlauf und Stack-Druck</h2><p class="note">Zeitangaben sind rechnerische Levelanfänge ohne Pausen. Für Profil A und B sind nur die acht bestätigten Level enthalten; fehlende Werte werden nicht extrapoliert.</p>
+<div class="table-wrap"><table id="blindtable"><thead><tr><th>Level</th><th>SB / BB</th><th>Ante / Spieler</th><th>Ante gesamt (BB)</th><th>Startstack (BB)</th><th>Beginn ohne Pausen</th></tr></thead><tbody></tbody></table></div>
+</section>
+<div class="two-col extra-panel"><section class="panel"><h2>4 · Preisgeld &amp; Entries</h2><div class="controls" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="group"><label for="entries">Entries inkl. Re-Entries</label><input id="entries" type="number" min="1" value="65"></div><div class="group"><label for="prizePaid">Bezahlte Plätze (aktuell)</label><input id="prizePaid" type="number" min="1" value="10"></div></div><div id="poolResult" class="hint"></div><p class="note">Wichtig: Ohne offizielle Auszahlungstabelle für die gewählte Entry-Zahl lässt sich die Preisstaffel nicht eindeutig rekonstruieren. Änderungen sind nur Szenarien.</p><details open><summary>Letzte bekannte Preisverteilung (65 Entries)</summary><div class="table-wrap" style="max-height:335px"><table id="prizetable"><thead><tr><th>Platz</th><th>Preis (€)</th><th>Anteil am Snapshot</th></tr></thead><tbody></tbody></table></div></details></section>
+<section class="panel"><h2>5 · Exaktes ICM für 2–10 Spieler</h2><p class="note">Nur verwenden, wenn wirklich nur diese Spieler um die angegebenen Plätze spielen. Ein Table-Snapshot bei 50 verbleibenden Spielern ist <b>kein</b> exaktes Turnier-ICM.</p>
+<div class="icm-form"><div class="group"><label for="icmStacks">Stacks aller verbleibenden Spieler</label><textarea id="icmStacks">30000,26000,22000,18000,15000,12000,9000,8000,5000</textarea></div><div class="group"><label for="icmPayouts">Preise Platz 1–N in €</label><textarea id="icmPayouts">175.60,147.37,123.69,103.83,87.15,73.15,61.40,51.54,43.25</textarea></div><div class="group"><label for="icmHero">Hero Sitz (1–N)</label><input id="icmHero" type="number" min="1" max="10" value="8"></div><div class="group"><label for="icmVillain">All-in-Gegner (1–N)</label><input id="icmVillain" type="number" min="1" max="10" value="9"></div></div>
+<div class="actions-row"><button class="btn primary" id="runICM">ICM / Call-Schwelle rechnen</button></div><div id="icmResult"></div></section></div>
+<section class="panel extra-panel"><h2>6 · Transparenz und Grenzen</h2>
+<details open><summary>Was wird tatsächlich berechnet?</summary><p class="note">Der C++-Evaluator berechnet per Monte Carlo die reine Preflop-Showdown-Equity jeder Handklasse gegen neun nach einer offen gelegten Chen-Heuristik sortierte Gegnerranges. Er verwendet pro Hand und Range 16.000 simulierte Boards mit reproduzierbarem Zufallsseed. Das zugrunde liegende Potmodell vergleicht Aktionen anhand angenommener gegnerischer Foldwahrscheinlichkeiten und rabattierter Equity-Realisierung. Eröffnungsfrequenzen und zulässige Bluff-/Value-3-Bets werden als <b>explizite strategische Nebenbedingungen</b> gesetzt – sie sind keine vom Monte-Carlo-Solver gefundenen Gleichgewichte.</p></details>
+<details><summary>Welche Unsicherheit bleibt?</summary><p class="note">Bei 16.000 unabhängigen Simulationen je Hand/Range liegt der rein statistische Standardfehler bei 50 % Equity höchstens bei etwa 0,40 Prozentpunkten. Die wesentlich größere Unsicherheit entsteht durch angenommene Ranges, das vereinfachte Postflop-Modell und die Beschränkung auf einen Caller. Multiway-Pots, bet sizes jenseits der Eingaben, Spielerunterschiede, ICM außerhalb der gesonderten Berechnung, Re-Entry-Entscheidungen, Late-Registration-Effekte und der Early-Bird-Bubble-Schutz sind nicht als vollständiger Spielbaum abgebildet.</p></details>
+<details><summary>Warum sind die Handaktionen keine GTO-Mischfrequenzen?</summary><p class="note">Die Matrix wählt je Hand die beste Aktion unter begrenzten, explizit modellierten Möglichkeiten; diese Wahl ist ein geschätzter Best Response gegen angenommene Gegner. Eine reale GTO-Frequenz pro Hand müsste durch einen Preflop-/Postflop-Solver für das vollständige Action-Tree und passende Stackverteilungen berechnet werden. Daher zeigt jede Zelle <b>eine Modellentscheidung</b>, keine unbewiesene 50/50-Mischfrequenz.</p></details>
+<details><summary>Warum ist das 6-Max-Modell anders?</summary><p class="note">Bei 6 Spielern zahlen sechs statt acht Spieler dieselbe Ante pro Person ein. Der Gesamtpot ist kleiner, die Positionen verschieben sich und es bleiben weniger Gegner hinter dem Eröffner. Die Berechnungen verwenden diese tatsächlich verschiedenen Werte und dieselben Level bis Level 8; die späteren Blindstufen sind nicht bekannt.</p></details>
+<details><summary>Nutzungshinweis</summary><p class="note">Dieses Material ist zur Analyse und zum Lernen außerhalb laufender Online-Poker-Partien erstellt. Bei GGPoker kann das Nachschlagen von Charts während des Spiels als unzulässige Real-Time Assistance gelten. Glücksspiel kann zu Verlusten führen; die gezeigten Erwartungswerte garantieren keine Gewinne.</p></details>
+</section>
+<div class="footer">MTT Preflop-Labor · Modellstand 08.11.2026 · Daten aus den vom Nutzer bereitgestellten Turnier-Screenshots · C++/JavaScript-Simulation + exakte ICM-Subset-Berechnung für 2–10 Spieler. Keine Serveranbindung, keine Accounts, keine Live-Pokerdaten.</div>
+</div>
+<script>window.POKER_DATA={"version":"2026-11-08.1","profile_source":"A: Screenshots 07.11.; B: Nutzeranpassung; C: Screenshots 08.11.","currency_snapshot":"EUR","equity_description":"Heads-up Preflop-Showdown-Monte-Carlo vs Chen-geordnete Range, nicht GTO","profiles":{"A":{"name":"A · 8-Max / 10.000 / 8 Min","tablesize":8,"finaltable":9,"startstack":10000,"interval_minutes":8,"levels":[{"level":1,"sb":50,"bb":100,"ante":12,"timebank":5,"note":""},{"level":2,"sb":60,"bb":120,"ante":15,"timebank":0,"note":""},{"level":3,"sb":80,"bb":160,"ante":20,"timebank":0,"note":""},{"level":4,"sb":100,"bb":200,"ante":25,"timebank":0,"note":""},{"level":5,"sb":125,"bb":250,"ante":30,"timebank":0,"note":""},{"level":6,"sb":150,"bb":300,"ante":35,"timebank":0,"note":""},{"level":7,"sb":175,"bb":350,"ante":45,"timebank":0,"note":""},{"level":8,"sb":200,"bb":400,"ante":50,"timebank":0,"note":""}],"buyin_total_usd":1.0,"buyin_to_pool_usd":0.92,"guarantee_usd":null,"late_registration_level":11,"reentries":"unbegrenzt","payouts":null,"payout_entries":null,"prize_count_snapshot":45,"prize_entries_snapshot":333,"notes":["Nur Level 1–8 im Screenshot belegt; keine Extrapolation.","9 Spieler am Finaltisch laut Screenshot.","Auszahlung 45 von 333 Entries ist eine ältere Momentaufnahme."]},"B":{"name":"B · 6-Max / 10.000 / 5 Min","tablesize":6,"finaltable":null,"startstack":10000,"interval_minutes":5,"levels":[{"level":1,"sb":50,"bb":100,"ante":12,"timebank":5,"note":""},{"level":2,"sb":60,"bb":120,"ante":15,"timebank":0,"note":""},{"level":3,"sb":80,"bb":160,"ante":20,"timebank":0,"note":""},{"level":4,"sb":100,"bb":200,"ante":25,"timebank":0,"note":""},{"level":5,"sb":125,"bb":250,"ante":30,"timebank":0,"note":""},{"level":6,"sb":150,"bb":300,"ante":35,"timebank":0,"note":""},{"level":7,"sb":175,"bb":350,"ante":45,"timebank":0,"note":""},{"level":8,"sb":200,"bb":400,"ante":50,"timebank":0,"note":""}],"buyin_total_usd":null,"buyin_to_pool_usd":null,"guarantee_usd":null,"late_registration_level":null,"reentries":null,"payouts":null,"payout_entries":null,"prize_count_snapshot":null,"prize_entries_snapshot":null,"notes":["Hypothetisches 6-Max-Profil: Blind- und Ante-Werte aus A; 5-Minuten-Level.","Ante unverändert je Spieler, daher geringerer Gesamt-Ante.","Ab Level 9 keine gesicherten Blinddaten."]},"C":{"name":"C · 8-Max / 8.000 / 5 Min / 2 $","tablesize":8,"finaltable":9,"startstack":8000,"interval_minutes":5,"levels":[{"level":1,"sb":50,"bb":100,"ante":12,"timebank":4,"note":""},{"level":2,"sb":60,"bb":120,"ante":15,"timebank":0,"note":""},{"level":3,"sb":70,"bb":140,"ante":18,"timebank":0,"note":""},{"level":4,"sb":80,"bb":160,"ante":20,"timebank":0,"note":""},{"level":5,"sb":100,"bb":200,"ante":25,"timebank":0,"note":""},{"level":6,"sb":125,"bb":250,"ante":30,"timebank":0,"note":""},{"level":7,"sb":150,"bb":300,"ante":35,"timebank":0,"note":""},{"level":8,"sb":175,"bb":350,"ante":45,"timebank":0,"note":""},{"level":9,"sb":200,"bb":400,"ante":50,"timebank":0,"note":""},{"level":10,"sb":225,"bb":450,"ante":55,"timebank":0,"note":""},{"level":11,"sb":250,"bb":500,"ante":60,"timebank":0,"note":""},{"level":12,"sb":300,"bb":600,"ante":75,"timebank":0,"note":""},{"level":13,"sb":350,"bb":700,"ante":85,"timebank":0,"note":"extra Zeitkarte +1"},{"level":14,"sb":400,"bb":800,"ante":100,"timebank":0,"note":""},{"level":15,"sb":500,"bb":1000,"ante":125,"timebank":0,"note":""},{"level":16,"sb":600,"bb":1200,"ante":150,"timebank":0,"note":""},{"level":17,"sb":800,"bb":1600,"ante":200,"timebank":0,"note":""},{"level":18,"sb":1000,"bb":2000,"ante":250,"timebank":0,"note":""},{"level":19,"sb":1250,"bb":2500,"ante":300,"timebank":0,"note":""},{"level":20,"sb":1500,"bb":3000,"ante":350,"timebank":0,"note":""},{"level":21,"sb":1750,"bb":3500,"ante":450,"timebank":0,"note":""},{"level":22,"sb":2000,"bb":4000,"ante":500,"timebank":0,"note":""},{"level":23,"sb":2500,"bb":5000,"ante":600,"timebank":0,"note":""},{"level":24,"sb":3000,"bb":6000,"ante":750,"timebank":0,"note":""},{"level":25,"sb":3500,"bb":7000,"ante":850,"timebank":0,"note":"extra Zeitkarte +1"},{"level":26,"sb":4000,"bb":8000,"ante":1000,"timebank":0,"note":""},{"level":27,"sb":5000,"bb":10000,"ante":1250,"timebank":0,"note":""},{"level":28,"sb":6000,"bb":12000,"ante":1500,"timebank":0,"note":""},{"level":29,"sb":8000,"bb":16000,"ante":2000,"timebank":0,"note":""},{"level":30,"sb":10000,"bb":20000,"ante":2500,"timebank":0,"note":""},{"level":31,"sb":12500,"bb":25000,"ante":3000,"timebank":0,"note":""},{"level":32,"sb":15000,"bb":30000,"ante":3500,"timebank":0,"note":""},{"level":33,"sb":17500,"bb":35000,"ante":4500,"timebank":0,"note":""},{"level":34,"sb":20000,"bb":40000,"ante":5000,"timebank":0,"note":""},{"level":35,"sb":25000,"bb":50000,"ante":6000,"timebank":0,"note":""},{"level":36,"sb":30000,"bb":60000,"ante":7500,"timebank":0,"note":""},{"level":37,"sb":35000,"bb":70000,"ante":8500,"timebank":0,"note":"extra Zeitkarte +1"}],"buyin_total_usd":2.0,"buyin_to_pool_usd":1.84,"guarantee_usd":1000.0,"late_registration_level":11,"reentries":"unbegrenzt","payouts":[175.6,147.37,123.69,103.83,87.15,73.15,61.4,51.54,43.25,30.47],"payout_entries":65,"prize_count_snapshot":10,"prize_entries_snapshot":65,"notes":["Preisgeld 897,45 € für 65 Entries, zehn bezahlte Plätze: Snapshot, keine endgültige Payout-Struktur.","Dollar-Garantie nicht ohne Währungsumrechnung mit Euro-Auszahlung addieren.","Start 08.11.2026 12:15."]}},"equities":{"algorithm":"7card-showdown-monte-carlo","samples_per_cell":16000,"range_percentiles":[0.06,0.1,0.15,0.2,0.28,0.38,0.52,0.7,1],"equity":{"AA":[0.85722,0.84731,0.84334,0.84028,0.83597,0.83834,0.83913,0.84928,0.85091],"AKs":[0.58556,0.6265,0.63353,0.63222,0.63441,0.65341,0.65575,0.66559,0.66897],"AQs":[0.47769,0.55881,0.57656,0.59975,0.61603,0.62591,0.64147,0.64234,0.6645],"AJs":[0.37678,0.47684,0.54859,0.57066,0.58794,0.60837,0.62113,0.63594,0.65066],"ATs":[0.32859,0.42566,0.49906,0.53769,0.56644,0.59641,0.61747,0.63519,0.64628],"A9s":[0.31025,0.38625,0.4575,0.50141,0.54197,0.56163,0.59006,0.60822,0.63113],"A8s":[0.31769,0.3865,0.44328,0.4795,0.52169,0.54991,0.57006,0.59781,0.62138],"A7s":[0.31828,0.39,0.44462,0.46894,0.51084,0.53263,0.56306,0.58528,0.60313],"A6s":[0.31212,0.39887,0.44969,0.46084,0.49569,0.50438,0.53791,0.56925,0.59134],"A5s":[0.32956,0.40203,0.45506,0.46466,0.50197,0.50587,0.53438,0.56294,0.60172],"A4s":[0.33444,0.395,0.44666,0.46322,0.49044,0.50103,0.52569,0.55628,0.59337],"A3s":[0.32766,0.39209,0.45494,0.45984,0.48341,0.48956,0.525,0.55081,0.58],"A2s":[0.32506,0.38591,0.45528,0.44812,0.47563,0.48263,0.51244,0.54484,0.57434],"AKo":[0.57581,0.60291,0.60784,0.61947,0.61744,0.63553,0.63431,0.64003,0.64684],"KK":[0.67397,0.72641,0.77281,0.76191,0.77681,0.77272,0.78356,0.80316,0.81772],"KQs":[0.34713,0.42341,0.50941,0.51931,0.53825,0.53928,0.57106,0.60766,0.62706],"KJs":[0.32166,0.38559,0.46703,0.48481,0.52659,0.52916,0.56112,0.59906,0.63484],"KTs":[0.33078,0.36572,0.43309,0.45684,0.50009,0.51109,0.54797,0.57612,0.62475],"K9s":[0.32266,0.35597,0.40444,0.42684,0.47087,0.48931,0.52319,0.56237,0.60628],"K8s":[0.31969,0.34447,0.39159,0.41222,0.45744,0.46603,0.50762,0.54859,0.58666],"K7s":[0.323,0.35325,0.39403,0.41037,0.45487,0.4565,0.5025,0.53659,0.57228],"K6s":[0.32519,0.35069,0.39187,0.39816,0.44181,0.45897,0.49094,0.5255,0.5655],"K5s":[0.32325,0.35275,0.39581,0.40687,0.44291,0.43538,0.48525,0.51147,0.56163],"K4s":[0.31747,0.34966,0.39116,0.39763,0.44088,0.44756,0.4725,0.50656,0.54597],"K3s":[0.31122,0.34587,0.38481,0.39534,0.42966,0.43756,0.46444,0.498,0.54563],"K2s":[0.30609,0.33853,0.38734,0.39497,0.41831,0.431,0.45887,0.48213,0.52953],"AQo":[0.45709,0.52681,0.56991,0.58478,0.59269,0.60466,0.61456,0.63247,0.64253],"KQo":[0.30353,0.39231,0.49031,0.49062,0.51744,0.52406,0.55009,0.58331,0.61113],"QQ":[0.57822,0.63691,0.70081,0.70488,0.73091,0.7375,0.75978,0.76891,0.79378],"QJs":[0.31038,0.36181,0.41291,0.453,0.49944,0.50097,0.53322,0.5635,0.60741],"QTs":[0.32784,0.34791,0.38706,0.42403,0.46797,0.48509,0.52591,0.54512,0.59444],"Q9s":[0.31384,0.34294,0.3785,0.40297,0.452,0.46963,0.49928,0.52941,0.58378],"Q8s":[0.31159,0.33284,0.36691,0.38338,0.43084,0.45247,0.49291,0.50884,0.55906],"Q7s":[0.30141,0.32547,0.35631,0.37156,0.42291,0.42991,0.46509,0.48562,0.53744],"Q6s":[0.30934,0.32166,0.35709,0.36903,0.41475,0.43462,0.46384,0.49225,0.53375],"Q5s":[0.299,0.3255,0.35403,0.37381,0.41419,0.42647,0.45506,0.49025,0.53431],"Q4s":[0.29847,0.32197,0.34506,0.36588,0.40637,0.40819,0.44556,0.47291,0.52166],"Q3s":[0.29266,0.31444,0.35063,0.36472,0.40131,0.40484,0.43812,0.46819,0.51372],"Q2s":[0.29459,0.31569,0.35481,0.35737,0.39266,0.40291,0.42941,0.45725,0.49834],"AJo":[0.33256,0.45741,0.52156,0.55591,0.56409,0.58947,0.599,0.62316,0.62838],"KJo":[0.28253,0.34991,0.43881,0.45288,0.49616,0.49681,0.53197,0.57063,0.60606],"QJo":[0.26531,0.3285,0.39084,0.42259,0.46409,0.47234,0.51016,0.53159,0.58247],"JJ":[0.48116,0.56906,0.61203,0.65203,0.69103,0.70384,0.73075,0.73981,0.78422],"JTs":[0.32131,0.33725,0.36219,0.40034,0.45188,0.47978,0.50641,0.53025,0.56972],"J9s":[0.31481,0.33691,0.35363,0.37844,0.42894,0.46319,0.48116,0.50959,0.55394],"J8s":[0.31131,0.3325,0.33766,0.36944,0.42291,0.43534,0.46856,0.49738,0.542],"J7s":[0.30119,0.32438,0.3275,0.3485,0.40206,0.42603,0.45228,0.47847,0.51931],"J6s":[0.28469,0.31091,0.32231,0.34453,0.38391,0.40478,0.44041,0.46516,0.50544],"J5s":[0.29141,0.31347,0.31869,0.34722,0.38625,0.39925,0.43628,0.46319,0.50347],"J4s":[0.28381,0.31238,0.32225,0.33753,0.37934,0.40025,0.42509,0.44506,0.48269],"J3s":[0.28234,0.30078,0.31625,0.33763,0.37578,0.38441,0.41378,0.43856,0.47772],"J2s":[0.27469,0.29469,0.31,0.33831,0.36016,0.37878,0.40972,0.43488,0.47731],"ATo":[0.29244,0.39375,0.46984,0.52631,0.54684,0.56472,0.59272,0.61103,0.63031],"KTo":[0.29544,0.32928,0.40137,0.42641,0.47963,0.48662,0.53134,0.57109,0.60266],"QTo":[0.28897,0.30722,0.35713,0.38994,0.45084,0.45759,0.50172,0.52475,0.56872],"JTo":[0.28769,0.29981,0.332,0.36272,0.4245,0.44966,0.48641,0.50609,0.54484],"TT":[0.45047,0.49556,0.53634,0.58741,0.64991,0.6665,0.70109,0.71919,0.74794],"T9s":[0.32966,0.33053,0.34503,0.37853,0.41525,0.45534,0.48119,0.50366,0.54328],"T8s":[0.324,0.34225,0.33163,0.36128,0.40578,0.42741,0.45863,0.47772,0.52331],"T7s":[0.32081,0.31409,0.32206,0.34837,0.38619,0.40609,0.43981,0.46122,0.50572],"T6s":[0.30609,0.30916,0.31716,0.34091,0.37903,0.39847,0.42169,0.45144,0.48706],"T5s":[0.29806,0.29722,0.30803,0.32447,0.37341,0.3795,0.41194,0.44141,0.47291],"T4s":[0.29531,0.29853,0.30191,0.32156,0.36597,0.37869,0.40513,0.43212,0.46456],"T3s":[0.29053,0.29534,0.30225,0.32669,0.3585,0.37356,0.40234,0.42234,0.45459],"T2s":[0.28622,0.29028,0.29316,0.32184,0.34516,0.36162,0.39844,0.41369,0.45225],"A9o":[0.27484,0.35775,0.42406,0.47384,0.51247,0.53981,0.56878,0.58453,0.6105],"K9o":[0.28866,0.31272,0.37331,0.40369,0.44878,0.46663,0.49291,0.54631,0.57337],"Q9o":[0.27628,0.30138,0.34656,0.36184,0.42491,0.43741,0.46981,0.50194,0.55375],"J9o":[0.27828,0.30272,0.31694,0.34872,0.40134,0.43131,0.46059,0.48341,0.53397],"T9o":[0.29862,0.30078,0.31003,0.34056,0.39803,0.42037,0.44653,0.46906,0.51681],"99":[0.44747,0.45941,0.49025,0.54753,0.59269,0.63138,0.66759,0.68953,0.72353],"98s":[0.335,0.343,0.35778,0.37628,0.40428,0.42453,0.45666,0.47069,0.50825],"97s":[0.33031,0.32834,0.35872,0.36491,0.38528,0.41303,0.43975,0.45525,0.48759],"96s":[0.32519,0.32812,0.34009,0.34572,0.374,0.39234,0.42216,0.44097,0.47675],"95s":[0.31738,0.32184,0.32347,0.34334,0.36594,0.37581,0.41013,0.42759,0.45288],"94s":[0.29819,0.30816,0.31812,0.32897,0.35597,0.36528,0.39284,0.40928,0.436],"93s":[0.29509,0.30256,0.31219,0.32791,0.34156,0.36338,0.38659,0.40778,0.42956],"92s":[0.29359,0.30003,0.31091,0.32816,0.33481,0.35922,0.37697,0.39756,0.42781],"A8o":[0.27797,0.35156,0.42419,0.45759,0.49381,0.52878,0.542,0.57637,0.59703],"K8o":[0.28422,0.3025,0.35413,0.37794,0.42906,0.44584,0.47344,0.52397,0.564],"Q8o":[0.26891,0.29144,0.31909,0.36112,0.40703,0.41131,0.45963,0.48481,0.53638],"J8o":[0.27397,0.29231,0.30312,0.34197,0.37922,0.40391,0.44509,0.46056,0.5155],"T8o":[0.29331,0.28991,0.29841,0.32609,0.37612,0.39725,0.42391,0.44938,0.49419],"98o":[0.30397,0.308,0.31584,0.33266,0.37197,0.39453,0.42291,0.45162,0.48375],"88":[0.43922,0.45184,0.47353,0.51169,0.55469,0.59813,0.63284,0.65844,0.69066],"87s":[0.34481,0.34434,0.35784,0.36769,0.40237,0.41491,0.43325,0.44828,0.48078],"86s":[0.34253,0.34287,0.34784,0.3605,0.38522,0.39597,0.4125,0.4395,0.46178],"85s":[0.32431,0.32725,0.34369,0.34122,0.3705,0.37534,0.41203,0.429,0.44834],"84s":[0.316,0.31772,0.32794,0.33106,0.35803,0.36666,0.38844,0.41128,0.42469],"83s":[0.29744,0.30878,0.31462,0.3195,0.34425,0.34091,0.36916,0.39513,0.40019],"82s":[0.29456,0.29853,0.31216,0.31878,0.33403,0.33531,0.36853,0.38578,0.40187],"A7o":[0.28019,0.36503,0.41506,0.43894,0.47575,0.50359,0.53097,0.55978,0.58147],"K7o":[0.28878,0.31512,0.35953,0.37438,0.42103,0.42997,0.46778,0.50825,0.55844],"Q7o":[0.26394,0.2865,0.3185,0.33225,0.38975,0.40281,0.44138,0.46878,0.51987],"J7o":[0.25988,0.28391,0.28541,0.32622,0.36712,0.38294,0.42106,0.44356,0.49953],"T7o":[0.28187,0.28034,0.2865,0.31303,0.35484,0.38038,0.41653,0.43453,0.48253],"97o":[0.29106,0.30659,0.31194,0.32275,0.35594,0.38109,0.408,0.43291,0.46759],"87o":[0.31931,0.31791,0.32331,0.33263,0.36084,0.37134,0.40269,0.42591,0.45544],"77":[0.43525,0.44788,0.46453,0.49503,0.52797,0.57219,0.59316,0.63906,0.66453],"76s":[0.35397,0.34328,0.35644,0.36328,0.386,0.39925,0.41494,0.43547,0.44747],"75s":[0.33191,0.33966,0.34606,0.35422,0.37303,0.38444,0.39334,0.42578,0.43184],"74s":[0.31988,0.33244,0.34903,0.33731,0.35669,0.36012,0.38706,0.41059,0.41534],"73s":[0.30806,0.32041,0.32288,0.32669,0.34703,0.34503,0.36838,0.38778,0.39625],"72s":[0.29384,0.30553,0.30844,0.31816,0.32584,0.33009,0.35541,0.37612,0.38316],"A6o":[0.28197,0.35437,0.41487,0.43412,0.46541,0.483,0.51575,0.54291,0.57919],"K6o":[0.287,0.31556,0.35584,0.36359,0.42016,0.42972,0.46472,0.50047,0.54737],"Q6o":[0.26506,0.28259,0.32062,0.33181,0.37831,0.39825,0.43291,0.45444,0.50856],"J6o":[0.25225,0.27122,0.28144,0.30862,0.35969,0.37428,0.40425,0.43709,0.47394],"T6o":[0.26678,0.27097,0.27831,0.30538,0.34216,0.36088,0.40359,0.42325,0.46531],"96o":[0.28925,0.30097,0.30297,0.31,0.35081,0.37022,0.39684,0.41013,0.43869],"86o":[0.30325,0.30903,0.31288,0.32125,0.34747,0.35563,0.38684,0.40516,0.42875],"76o":[0.31075,0.31275,0.32612,0.32825,0.35344,0.36897,0.38644,0.40594,0.42634],"66":[0.42966,0.455,0.45347,0.47659,0.50703,0.53994,0.56847,0.603,0.63178],"65s":[0.34147,0.35278,0.35713,0.36206,0.38203,0.38547,0.40937,0.41022,0.43438],"64s":[0.33672,0.34222,0.34587,0.35294,0.35681,0.37681,0.38725,0.40875,0.41803],"63s":[0.32994,0.32553,0.338,0.33619,0.35166,0.35828,0.36653,0.38538,0.39587],"62s":[0.30828,0.30941,0.32225,0.32009,0.33594,0.33987,0.34956,0.36891,0.37472],"A5o":[0.29247,0.37556,0.42022,0.433,0.464,0.48769,0.50987,0.54894,0.57269],"K5o":[0.29084,0.31375,0.36084,0.37341,0.40841,0.4085,0.45166,0.48766,0.53063],"Q5o":[0.26522,0.28781,0.32119,0.33141,0.37591,0.39403,0.42016,0.45481,0.50034],"J5o":[0.24681,0.27797,0.28647,0.30622,0.359,0.36112,0.4075,0.42881,0.47825],"T5o":[0.25856,0.25912,0.27597,0.28291,0.33109,0.34397,0.38444,0.40253,0.44228],"95o":[0.28097,0.28841,0.29719,0.30022,0.33225,0.34987,0.37197,0.39731,0.42781],"85o":[0.29106,0.28794,0.30341,0.31294,0.33478,0.34216,0.36884,0.39444,0.41141],"75o":[0.29959,0.30375,0.31047,0.31891,0.34494,0.34503,0.36631,0.38859,0.40194],"65o":[0.30722,0.31766,0.32747,0.32841,0.33791,0.35569,0.35781,0.38578,0.39894],"55":[0.43394,0.44434,0.45275,0.46091,0.50059,0.51997,0.54031,0.57609,0.60766],"54s":[0.35178,0.35719,0.35687,0.36072,0.37706,0.37981,0.38303,0.41013,0.41613],"53s":[0.33094,0.33622,0.34944,0.35072,0.35394,0.36184,0.38069,0.39159,0.402],"52s":[0.32722,0.32622,0.32722,0.33791,0.34541,0.35206,0.35009,0.37447,0.37591],"A4o":[0.28537,0.36006,0.42269,0.42519,0.45809,0.46963,0.50103,0.53863,0.57319],"K4o":[0.2785,0.31184,0.35719,0.3645,0.40219,0.39703,0.4325,0.47456,0.52381],"Q4o":[0.25509,0.28637,0.31441,0.33213,0.37597,0.37888,0.41566,0.43506,0.4855],"J4o":[0.24584,0.26969,0.27781,0.30406,0.35269,0.35797,0.39819,0.41356,0.46356],"T4o":[0.25622,0.25425,0.26597,0.292,0.32466,0.34619,0.37978,0.40006,0.4365],"94o":[0.2635,0.27228,0.27387,0.29728,0.31419,0.32828,0.35544,0.37797,0.40003],"84o":[0.27359,0.27691,0.28419,0.29947,0.31925,0.32747,0.35613,0.36775,0.392],"74o":[0.28559,0.28944,0.30103,0.30438,0.325,0.33878,0.35744,0.37584,0.38331],"64o":[0.29919,0.30734,0.31084,0.31438,0.33206,0.32875,0.34541,0.37253,0.3745],"54o":[0.30781,0.32384,0.32634,0.32119,0.34184,0.34791,0.35716,0.36681,0.37872],"44":[0.4225,0.43794,0.44912,0.45259,0.48409,0.49897,0.513,0.54269,0.57084],"43s":[0.33219,0.33337,0.34259,0.34687,0.35491,0.36397,0.36866,0.37625,0.37822],"42s":[0.31394,0.33072,0.32931,0.32944,0.33487,0.34319,0.35372,0.35916,0.36178],"A3o":[0.2835,0.35378,0.42266,0.42984,0.45159,0.46394,0.49334,0.52631,0.55622],"K3o":[0.27628,0.30347,0.35187,0.35759,0.39716,0.40178,0.43347,0.47144,0.516],"Q3o":[0.25434,0.27731,0.31072,0.31888,0.36406,0.37138,0.40975,0.42819,0.47975],"J3o":[0.24372,0.26622,0.27456,0.30262,0.33516,0.35344,0.38997,0.40716,0.45322],"T3o":[0.24691,0.25038,0.26819,0.28403,0.3265,0.33331,0.36897,0.38794,0.42938],"93o":[0.26006,0.26372,0.2735,0.28753,0.30134,0.32872,0.34919,0.37406,0.40225],"83o":[0.25588,0.26372,0.27506,0.28181,0.30028,0.31556,0.33587,0.34856,0.36812],"73o":[0.26322,0.28741,0.28609,0.28781,0.31041,0.31528,0.33256,0.34784,0.36916],"63o":[0.287,0.2955,0.29437,0.30609,0.31544,0.31806,0.33525,0.35241,0.36059],"53o":[0.30316,0.30306,0.31047,0.31016,0.32887,0.33081,0.33656,0.34975,0.35894],"43o":[0.29844,0.303,0.30572,0.31453,0.31778,0.31609,0.32909,0.34047,0.34956],"33":[0.41731,0.42641,0.44134,0.44669,0.46975,0.48009,0.48831,0.5085,0.53253],"32s":[0.30844,0.31691,0.33003,0.32569,0.33019,0.33897,0.35181,0.35272,0.35697],"A2o":[0.27684,0.35447,0.41766,0.42912,0.44994,0.46337,0.48431,0.51731,0.54387],"K2o":[0.27397,0.29778,0.34756,0.35959,0.39531,0.3935,0.43012,0.45781,0.50428],"Q2o":[0.25044,0.27466,0.30691,0.31847,0.35569,0.36762,0.40625,0.42253,0.46828],"J2o":[0.23691,0.26866,0.26062,0.29672,0.32453,0.34156,0.37662,0.39753,0.44241],"T2o":[0.24781,0.25256,0.25603,0.277,0.30922,0.32712,0.3675,0.38272,0.416],"92o":[0.25612,0.26197,0.27703,0.28384,0.29453,0.32134,0.33772,0.35919,0.38931],"82o":[0.25731,0.26041,0.27209,0.28394,0.29281,0.30594,0.33419,0.35256,0.37116],"72o":[0.25897,0.26591,0.27075,0.27009,0.28406,0.29591,0.30825,0.33856,0.34759],"62o":[0.27928,0.28297,0.28231,0.28563,0.29656,0.30034,0.31684,0.33094,0.33531],"52o":[0.27937,0.29613,0.29659,0.29587,0.30228,0.31241,0.32278,0.33466,0.33784],"42o":[0.28322,0.29044,0.29509,0.29653,0.30403,0.30628,0.31606,0.32597,0.33166],"32o":[0.27366,0.28406,0.28925,0.28866,0.29466,0.29675,0.316,0.31966,0.32041],"22":[0.41553,0.42031,0.42581,0.43491,0.45188,0.45906,0.47416,0.47825,0.51069]}}};</script>
+<script>/*
+* Preflop-Entscheidungsmodell für offline Training. NICHT GTO, keine Live-RTA.
+* Chip-EV der jeweiligen Bet-Size unter expliziten, vereinfachten Fold-/Call-Annahmen;
+* Head-up Equity aus Monte-Carlo; Postflop als Equity-Realization-Faktor.
+* Das Modell berücksichtigt nicht: Multiway-Showdowns, Rake, zukünftige Postflop-Bets,
+* Balance der vollständigen Gegnerstrategien, ICM im Preflop-Ranking, Bounties/Versicherung.
+*/
+(function(global){'use strict';
+const RANKS='AKQJT98765432';
+const POSITIONS={2:['SB','BB'],3:['BTN','SB','BB'],4:['CO','BTN','SB','BB'],5:['HJ','CO','BTN','SB','BB'],6:['UTG','HJ','CO','BTN','SB','BB'],7:['UTG','MP','HJ','CO','BTN','SB','BB'],8:['UTG','UTG+1','MP','HJ','CO','BTN','SB','BB'],9:['UTG','UTG+1','MP1','LJ','HJ','CO','BTN','SB','BB']};
+const PALETTE={FOLD:'#34445b',CALL:'#2d9d83',RAISE:'#df8b22','3BET':'#f4aa38','4BET':'#f2b84b',JAM:'#d34d86',LIMP:'#8862c7'};
+const PROFILE_STYLES={tight:{title:'Tight',openMultiplier:.76,foldTo3bet:.64,foldToJam:.53,postflopSkill:1},normal:{title:'Ausgeglichen',openMultiplier:1,foldTo3bet:.48,foldToJam:.43,postflopSkill:1},loose:{title:'Loose / Callingstation',openMultiplier:1.3,foldTo3bet:.26,foldToJam:.22,postflopSkill:1.03}};
+const OPEN_8={
+  10:[.17,.19,.22,.27,.32,.40,.82],
+  20:[.17,.19,.22,.26,.32,.42,.84],
+  40:[.18,.21,.25,.30,.38,.51,.86],
+  100:[.15,.19,.22,.28,.36,.53,.85]
+};
+function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function handKey(i,j){return RANKS[Math.min(i,j)]+RANKS[Math.max(i,j)]+(i===j?'':i<j?'s':'o');}
+function handWeight(key){return key.length===2?6:key.endsWith('s')?4:12;}
+function handInfo(key){const a=RANKS.indexOf(key[0]),b=RANKS.indexOf(key[1]);return {pair:key.length===2,suited:key.endsWith('s'),hi:14-a,lo:14-b,gap:Math.abs(a-b)-1,ace:a===0||b===0};}
+function handKeys(){let result=[];for(let i=0;i<13;i++)for(let j=0;j<13;j++)result.push(handKey(i,j));return result;}
+function equityAgainst(equities,key,target){
+ const x=equities.range_percentiles, vals=equities.equity[key];
+ if(!vals)throw Error('Equity fehlt: '+key);
+ if(target<=x[0])return vals[0];
+ for(let i=1;i<x.length;i++)if(target<=x[i])return lerp(vals[i-1],vals[i],(target-x[i-1])/(x[i]-x[i-1]));
+ return vals[vals.length-1];
+}
+function scoreHand(eq,key,bb){
+ const i=handInfo(key);
+ let score=.34*equityAgainst(eq,key,.10)+.39*equityAgainst(eq,key,.28)+.27*equityAgainst(eq,key,1);
+ if(bb>=30){if(i.suited&&i.gap<=2)score+=.012;if(i.pair&&i.hi<=9)score+=.012;}
+ if(i.ace&&i.suited)score+=.005;
+ return score;
+}
+function strengthOrder(eq,stackBB){
+ const arr=handKeys().map(key=>({key,score:scoreHand(eq,key,stackBB),weight:handWeight(key)}));
+ arr.sort((a,b)=>b.score-a.score || a.key.localeCompare(b.key));
+ let cum=0;const lookup={};
+ for(const o of arr){lookup[o.key]={...o,percentile:(cum+o.weight*.5)/1326};cum+=o.weight;}
+ return lookup;
+}
+function baseOpenTarget(n,position,stackBB,totalAnteBB){
+ const seats=POSITIONS[n]; if(!seats||!seats.includes(position)||position==='BB')return 0;
+ const behind=n-1-seats.indexOf(position);
+ let idx=7-behind;
+ if(behind===8)idx=0; // 9-max früheste Position als extrapolierte UTG
+ idx=clamp(idx,0,6);
+ const knots=[10,20,40,100];let a=knots[0],b=knots[0];
+ for(const k of knots){if(stackBB>=k){a=k;b=k;}}
+ if(stackBB>knots[0]&&stackBB<knots[knots.length-1]){
+   for(let k=1;k<knots.length;k++){if(stackBB<=knots[k]){a=knots[k-1];b=knots[k];break;}}
+ }
+ let base=lerp(OPEN_8[a][idx],OPEN_8[b][idx],a===b?0:(stackBB-a)/(b-a));
+ if(n===9 && behind===8)base*=.87;
+ const anteAdjust=clamp(.96-totalAnteBB,-.3,.5);
+ base*=1-.18*anteAdjust;
+ if(stackBB<10)base*=.98;
+ return clamp(base,.045,.96);
+}
+function postedBB(pos){if(pos==='SB')return .5;if(pos==='BB')return 1;return 0;}
+function isAfter(seats,hero,villain){return seats.indexOf(hero)>seats.indexOf(villain);}
+function getEquityRealization(hero,style,stackBB,key,nCallers=1){
+ const info=handInfo(key);
+ const ip=['BTN','CO','HJ'].includes(hero);
+ let r=(hero==='BB'?.69:hero==='SB'?.59:(ip?.83:.73));
+ if(style==='loose')r-=.045;
+ if(stackBB>30 && info.suited && info.gap<=2)r+=.095;
+ if(stackBB>30 && info.pair && info.hi<=9)r+=.075;
+ if(stackBB<=15)r+=.055;
+ r-=.055*Math.max(0,nCallers-1);
+ return clamp(r,.48,.98);
+}
+function estimatedDefendRate(pos,hero,stackBB,style,forJam){
+ const hi=['UTG','UTG+1','MP1','LJ','MP'].includes(hero);
+ let v;
+ if(pos==='BB')v=(hero==='SB'?.68:hero==='BTN'?.53:hero==='CO'?.43:hi?.29:.36);
+ else if(pos==='SB')v=(hero==='BTN'?.26:hero==='CO'?.21:hi?.14:.19);
+ else v=hi?.10:hero==='CO'?.15:.13;
+ if(forJam){v*=stackBB<=8?.68:stackBB<=15?.54:.34;}
+ if(style==='loose')v*=forJam?1.20:1.23;
+ if(style==='tight')v*=forJam?.74:.80;
+ return clamp(v,.015,.78);
+}
+function openScenario(ctx,key,strength){
+ const {eq,seats,position,stackBB,anteBB,opponentStyle,players}=ctx;
+ const own=postedBB(position), pot=1.5+players*anteBB;
+ const behind=seats.slice(seats.indexOf(position)+1);
+ const stake=Math.max(.05,stackBB-own-anteBB);
+ const totalAnte=players*anteBB;
+ const target=baseOpenTarget(players,position,stackBB,totalAnte);
+ const permitted=strength.percentile<=target;
+ const raiseSize=stackBB<=20?2:stackBB<=45?2.2:2.3;
+ let pFoldRaise=1,pFoldJam=1,weightedCall=0,expectedCalls=0;
+ for(const opp of behind){
+  const d=estimatedDefendRate(opp,position,stackBB,opponentStyle,false);
+  const dj=estimatedDefendRate(opp,position,stackBB,opponentStyle,true);
+  pFoldRaise*=(1-d);pFoldJam*=(1-dj);
+  weightedCall+=dj* (opp==='BB'?.28:opp==='SB'?.19:.12);
+  expectedCalls+=d;
+ }
+ const meanJamRange=clamp(weightedCall/Math.max(.001,behind.reduce((s,opp)=>s+estimatedDefendRate(opp,position,stackBB,opponentStyle,true),0)),.06,.45);
+ const showdown=equityAgainst(eq,key,meanJamRange);
+ const avgOppPost=behind.includes('BB')?0.50:behind.includes('SB')?.3:0;
+ const oppRisk=Math.max(.05,stackBB-avgOppPost-anteBB);
+ const evJam=pFoldJam*pot+(1-pFoldJam)*(showdown*(pot+oppRisk)-(1-showdown)*stake);
+ const defendRange=clamp(position==='BTN'?.40:position==='CO'?.25:.16,.08,.53);
+ const e2=equityAgainst(eq,key,defendRange);
+ const realized=clamp(e2*getEquityRealization(position,opponentStyle,stackBB,key,expectedCalls),.05,.99);
+ const riskRaise=Math.max(0,raiseSize-own), extraOpp=Math.max(0,raiseSize-avgOppPost);
+ let evRaise=pFoldRaise*pot+(1-pFoldRaise)*(realized*(pot+extraOpp)-(1-realized)*riskRaise);
+ evRaise-=Math.max(0,expectedCalls-1)*.23;
+ if(stackBB<=raiseSize+anteBB)evRaise=-1e6;
+ const actions={FOLD:0,RAISE:evRaise,JAM:evJam};
+ if(position==='SB'){
+   const eLimp=equityAgainst(eq,key,.70), realizedLimp=eLimp*getEquityRealization(position,opponentStyle,stackBB,key,.85);
+   const raise=.5,oppBBExtra=.0;
+   actions.LIMP=realizedLimp*(pot+raise+oppBBExtra)-(1-realizedLimp)*raise-.1;
+ }
+ // Openfrequency calibration is an explicit prior; it stops unrealistic over-opening caused by simplified heads-up postflop values.
+ let action='FOLD';let backup='FOLD';
+ const info=handInfo(key),premium=['AA','KK','QQ','AKs','AKo'].includes(key);
+ const semibluff=info.pair&&info.hi<=9 || (info.ace&&info.lo<=5) || ['KQo','KJo','QJs','AJo'].includes(key);
+ // Relevante Aktionsbäume: bei tiefen Stacks ist ein 80-BB-Open-Jam nicht Teil
+ // der hier modellierten Strategie. Anderenfalls würde das verkürzte 1-Caller-
+ // Modell den Postflop-Wert von Minraises mit riesigen Jam-Pots vergleichen.
+ if(stackBB>25)actions.JAM=-1e6;
+ else if(stackBB>15 && position!=='SB' && (stackBB>19 || !['BTN','CO','HJ'].includes(position)||!semibluff||premium))actions.JAM=-1e6;
+ else if(stackBB>12 && stackBB<=15 && premium)actions.JAM=-1e6;
+ if(position==='SB'&&stackBB>12 && (stackBB>18||!semibluff||premium))actions.JAM=-1e6;
+ if(permitted){
+   const valid=['RAISE','JAM',...(position==='SB'?['LIMP']:[])].filter(a=>actions[a]>0);
+   if(position==='SB'){
+      // Struktureller SB-Limp-Mix: bei 6–25 BB keine pauschalen 80%-Open-Jams.
+      if(stackBB<=6)action=valid.includes('JAM')?'JAM':valid.includes('LIMP')?'LIMP':'FOLD';
+      else if(stackBB<=12){
+        if(strength.percentile<.48 && valid.includes('JAM'))action='JAM';
+        else if(valid.includes('LIMP'))action='LIMP';
+        else if(valid.includes('RAISE'))action='RAISE';
+      }else if(stackBB<=25){
+        if(semibluff && !premium && strength.percentile<.34 && stackBB<=18 && valid.includes('JAM'))action='JAM';
+        else if(strength.percentile<.23 && valid.includes('RAISE'))action='RAISE';
+        else if(valid.includes('LIMP'))action='LIMP';
+        else if(valid.includes('RAISE'))action='RAISE';
+      }else{
+        if(strength.percentile<.19 && valid.includes('RAISE'))action='RAISE';
+        else if(valid.includes('LIMP'))action='LIMP';
+        else if(valid.includes('RAISE'))action='RAISE';
+      }
+   } else if(stackBB<=11){
+      if(valid.includes('JAM'))action='JAM'; else if(valid.includes('RAISE'))action='RAISE';
+   }else if(stackBB<=15){
+      if(premium && valid.includes('RAISE'))action='RAISE';
+      else if(valid.includes('JAM') && (semibluff || strength.percentile>.06) && (position==='BTN'||position==='CO'||position==='HJ'||stackBB<=12))action='JAM';
+      else if(valid.includes('RAISE'))action='RAISE';
+   }else if(stackBB<=25){
+      if(['BTN','CO','HJ'].includes(position)&&semibluff&&!premium&&stackBB<=19 && valid.includes('JAM') && actions.JAM>actions.RAISE+.18)action='JAM';
+      else if(valid.includes('RAISE'))action='RAISE';
+   }else if(valid.includes('RAISE'))action='RAISE';
+ }
+ const options=Object.entries(actions).sort((a,b)=>b[1]-a[1]);backup=options.find(t=>t[0]!==action)?.[0]||'FOLD';
+ return {action,ev:actions[action],alternatives:actions,backup,limitedByOpenRange:!permitted,referencePct:target,range:meanJamRange,showdownEq:showdown,notes:['Openfrequenz-Referenz als explizite Nebenbedingung','Bei Calls wird Heads-up-Equity mit Equity-Realisierung geschätzt','Multiway-Call-Korrelationen nicht gelöst']};
+}
+function vsRaiseScenario(ctx,key,strength){
+ const {eq,seats,position,opener,stackBB,anteBB,players,opponentStyle,openBB}=ctx;
+ if(!isAfter(seats,position,opener))return {action:'FOLD',ev:0,alternatives:{FOLD:0},error:'Position liegt vor dem Eröffner'};
+ const pot0=1.5+players*anteBB,hp=postedBB(position),op=postedBB(opener);
+ const size=clamp(openBB,1.5,Math.max(1.5,stackBB-anteBB)),pot=pot0+Math.max(0,size-op);
+ const call=Math.max(0,size-hp),isOOP=position==='BB'||position==='SB';
+ const openRange=clamp(baseOpenTarget(players,opener,stackBB,players*anteBB)*PROFILE_STYLES[opponentStyle].openMultiplier,.06,.95);
+ const rawEquity=equityAgainst(eq,key,openRange),realized=rawEquity*getEquityRealization(position,opponentStyle,stackBB,key);
+ let evCall=realized*pot-(1-realized)*call;
+ if(seats.indexOf(position)<seats.length-2)evCall-=.15; // möglicher Squeeze hinter uns
+ const r3=Math.min(stackBB-anteBB,Math.max(size+1,(isOOP?3.6:3.1)*size));
+ const foldTo3=PROFILE_STYLES[opponentStyle].foldTo3bet;
+ const fold3=clamp(foldTo3+((handInfo(key).ace)? .025:0),.08,.82);
+ const raiseRisk=r3-hp,moreCall=Math.max(0,r3-size);
+ const cRange=clamp(openRange*(1-fold3)*1.2,.055,.45);
+ const e3=equityAgainst(eq,key,cRange)*getEquityRealization(position,opponentStyle,stackBB,key);
+ let ev3=fold3*pot+(1-fold3)*(e3*(pot+moreCall)-(1-e3)*raiseRisk)-.55;
+ const cap3bet=clamp(openRange*.30+.03,.055,.16);
+ const info=handInfo(key);
+ const value3= (info.pair&&info.hi>=11) ||
+   ['AKs','AKo','AQs','AQo','AJs','KQs','KJs','QJs','A5s','A4s'].includes(key) ||
+   ((opener==='CO'||opener==='BTN')&&['ATs','KTs','A3s'].includes(key));
+ if(strength.percentile>cap3bet||!value3)ev3=-1e6;
+ if(r3>=stackBB-anteBB)ev3=-1e6;
+ const foldJam=clamp(PROFILE_STYLES[opponentStyle].foldToJam+ (openRange>.3?.13:0)+(handInfo(key).ace?.03:0),.16,.83);
+ const cJamRange=clamp(openRange*(1-foldJam)*1.15,.055,.35);
+ const eJam=equityAgainst(eq,key,cJamRange),ourRisk=stackBB-hp-anteBB;
+ const oppRisk=stackBB-op-anteBB;
+ let evJam=foldJam*pot+(1-foldJam)*(eJam*(pot+oppRisk)-(1-eJam)*ourRisk)-.35;
+ if(stackBB>35||strength.percentile>clamp(.13,0,.17))evJam=-1e6;
+ const actions={FOLD:0,CALL:evCall,'3BET':ev3,JAM:evJam};
+ let possible=Object.entries(actions).filter(([a,v])=>v>-1e5).sort((a,b)=>b[1]-a[1]);
+ let best=possible[0];
+ return {action:best[0],ev:best[1],alternatives:actions,backup:possible[1]?.[0]||'FOLD',referencePct:openRange,showdownEq:rawEquity,eqRealized:realized,callCost:call,potBefore:pot,threebetTo:r3,notes:['3-Bet nur innerhalb einer begrenzten Bluff-/Value-Referenzrange','Calling-Equity wird um Position und Postflop-Realisierung reduziert']};
+}
+function vs3betScenario(ctx,key,strength){
+ const {eq,seats,position,opener,stackBB,anteBB,players,opponentStyle,openBB,threebetBB}=ctx;
+ if(position===opener || !isAfter(seats,opener,position))return {action:'FOLD',ev:0,alternatives:{FOLD:0},error:'Der 3-Better muss nach deinem ursprünglichen Open sitzen'};
+ const hp=postedBB(position),vp=postedBB(opener),base=1.5+players*anteBB;
+ const r=clamp(openBB,1.5,Math.max(1.5,stackBB-anteBB)),r3=clamp(threebetBB,r+1,Math.max(r+1,stackBB-anteBB));
+ const P=base+(r-hp)+(r3-vp),cost=r3-r;
+ const villain3BetRange=clamp(opener==='BB'?.13:opener==='SB'?.105:.082,.05,.22);
+ const raw=equityAgainst(eq,key,villain3BetRange),R=getEquityRealization(position,opponentStyle,stackBB,key);
+ const evCall=raw*R*P-(1-raw*R)*cost-.15;
+ const fold4=clamp(opponentStyle==='tight'?.28:opponentStyle==='loose'?.39:.34,.18,.55);
+ const fourbet=Math.min(stackBB-anteBB,r3*2.25);
+ const risk4=fourbet-r,more4=fourbet-r3;
+ const e4=equityAgainst(eq,key,.05)*R;
+ let ev4=fold4*P+(1-fold4)*(e4*(P+more4)-(1-e4)*risk4)-.65;
+ const pmax=clamp(villain3BetRange*.52,.03,.065);
+ const fourbetCandidate=['AA','KK','QQ','AKs','AKo','A5s','A4s'].includes(key);
+ if(strength.percentile>pmax || fourbet>=stackBB-anteBB || !fourbetCandidate)ev4=-1e6;
+ const callRange=.045;const eJ=equityAgainst(eq,key,callRange),risk=stackBB-r-anteBB;
+ const oppRisk=stackBB-r3-anteBB;
+ let evJam=fold4*P+(1-fold4)*(eJ*(P+oppRisk)-(1-eJ)*risk)-.35;
+ if(strength.percentile>.07 || stackBB>45 || !['AA','KK','QQ','JJ','AKs','AKo','AQs','AQo'].includes(key))evJam=-1e6;
+ const actions={FOLD:0,CALL:evCall,'4BET':ev4,JAM:evJam};
+ const options=Object.entries(actions).filter(a=>a[1]>-1e5).sort((a,b)=>b[1]-a[1]);
+ return {action:options[0][0],ev:options[0][1],alternatives:actions,backup:options[1]?.[0]||'FOLD',referencePct:villain3BetRange,showdownEq:raw,callCost:cost,potBefore:P,notes:['Die 3-Bet-Range ist ausdrücklich modelliert','Nur Heads-up-Anschlussspiel mit Equity-Realisierungsabschlag']};
+}
+function vsJamScenario(ctx,key){
+ const {eq,position,opener,stackBB,anteBB,players,opponentStyle}=ctx;
+ const heroPost=postedBB(position),oppPost=postedBB(opener);
+ const pot0=1.5+players*anteBB;
+ let shoveRange=baseOpenTarget(players,opener,stackBB,players*anteBB)*PROFILE_STYLES[opponentStyle].openMultiplier;
+ if(stackBB>30)shoveRange=Math.min(.04,shoveRange*.22);
+ else if(stackBB>15)shoveRange*=.62;
+ else if(opener==='SB')shoveRange*=.78;
+ else shoveRange*=.94;
+ shoveRange=clamp(shoveRange,.015,.88);
+ const eqRaw=equityAgainst(eq,key,shoveRange);
+ const effectiveRisk=Math.max(.01,stackBB-heroPost-anteBB),villainAdded=Math.max(.01,stackBB-oppPost-anteBB);
+ const pot=pot0+villainAdded;
+ const threshold=effectiveRisk/(pot+effectiveRisk);
+ const evCall=eqRaw*pot-(1-eqRaw)*effectiveRisk;
+ return {action:evCall>0?'CALL':'FOLD',ev:Math.max(0,evCall),alternatives:{FOLD:0,CALL:evCall},backup:evCall>0?'FOLD':'CALL',referencePct:shoveRange,showdownEq:eqRaw,requiredEq:threshold,callCost:effectiveRisk,potBefore:pot,notes:['Chip-EV bei 1:1-All-in (kein weiterer Caller), Fold-Referenz = 0','ICM-Risikoprämie wird separat berechnet']};
+}
+function getContext(data,inputs){
+ const p=data.profiles[inputs.profile];if(!p)throw Error('Unbekanntes Profil');
+ const lvl=p.levels.find(l=>l.level===Number(inputs.level));if(!lvl)throw Error('Blindlevel fehlt in den gesicherten Daten');
+ const players=Number(inputs.players||p.tablesize),seats=POSITIONS[players];if(!seats)throw Error('2 bis 9 Spieler');
+ const bb=lvl.bb,anteBB=lvl.ante/bb;
+ const heroChips=Number(inputs.heroChips||p.startstack),villainChips=Number(inputs.villainChips||heroChips);
+ const stackBB=Math.max(0.001,Math.min(heroChips,villainChips)/bb);
+ return {...inputs,profileInfo:p,levelInfo:lvl,bb,anteBB,players,seats,stackBB,heroChips,villainChips,eq:data.equities,position:inputs.position||seats[0],opener:inputs.opener||seats[0],opponentStyle:inputs.opponentStyle||'normal',openBB:Math.max(1.5,Number(inputs.openBB||2.2)),threebetBB:Math.max(3.5,Number(inputs.threebetBB||7.5))};
+}
+function computeMatrix(data,inputs){
+ const ctx=getContext(data,inputs),spot=inputs.spot||'RFI';
+ if(ctx.stackBB<2)throw Error('Effektiver Stack unter 2 BB: Hier ist keine normale Preflop-Rangewahl sinnvoll; Blind-/Ante-All-in separat behandeln.');
+ const order=strengthOrder(data.equities,ctx.stackBB);
+ const hands={};const weights={};let comboCounts={FOLD:0,CALL:0,RAISE:0,'3BET':0,'4BET':0,JAM:0,LIMP:0};
+ for(const key of handKeys()){
+   const s=order[key];let v;
+   if(spot==='RFI')v=openScenario(ctx,key,s);
+   else if(spot==='OPEN')v=vsRaiseScenario(ctx,key,s);
+   else if(spot==='3BET')v=vs3betScenario(ctx,key,s);
+   else if(spot==='JAM')v=vsJamScenario(ctx,key);
+   else throw Error('Aktion unbekannt: '+spot);
+   hands[key]={...v,key,weight:handWeight(key),power:s.score,percentile:s.percentile};
+   comboCounts[v.action]=(comboCounts[v.action]||0)+handWeight(key);
+ }
+ const frequencies={};for(const [k,v] of Object.entries(comboCounts))frequencies[k]=100*v/1326;
+ return {context:ctx,spot,hands,frequencies,comboCounts,handOrder:handKeys()};
+}
+function payoutPool(p,entries){if(!p.buyin_to_pool_usd)return null;return Math.max(p.guarantee_usd||0,p.buyin_to_pool_usd*entries);}
+// ICM exakt via subset dynamic programming bis n=10 für Preisgeld ab Platz 1 im verbleibenden Feld.
+function icmExact(stacks,payouts){
+ const n=stacks.length;if(n<2||n>10)throw Error('ICM: 2–10 verbleibende Spieler');
+ if(stacks.some(s=>!Number.isFinite(s)||s<0))throw Error('Ungültiger Stack');
+ const total=stacks.reduce((a,b)=>a+b,0);if(total<=0)throw Error('Alle Stacks 0');
+ const positive=stacks.filter(s=>s>0).length;
+ let sums=new Float64Array(1<<n);for(let mask=1;mask<(1<<n);mask++){
+    const lsb=mask&-mask,bit=31-Math.clz32(lsb);sums[mask]=sums[mask^lsb]+stacks[bit];
+ }
+ const dp=new Float64Array(1<<n),dist=Array.from({length:n},()=>new Float64Array(n));dp[0]=1;
+ for(let mask=0;mask<(1<<n)-1;mask++){
+   const prob=dp[mask],remain=total-sums[mask];if(!prob || remain<=0)continue;
+   let rank=0;for(let i=0;i<n;i++)if(mask&(1<<i))rank++;
+   for(let i=0;i<n;i++)if(!(mask&(1<<i))&&stacks[i]>0){
+       const px=prob*stacks[i]/remain; dp[mask|(1<<i)]+=px;dist[i][rank]+=px;
+   }
+ }
+ const paid=Array.from({length:n},(_,k)=>Number(payouts[k]||0));
+ // Spieler mit Stack 0 sind bereits ausgeschieden und belegen die letzten Plätze.
+ const bottomCount=n-positive;
+ if(bottomCount){const bottomShare=paid.slice(positive).reduce((a,b)=>a+b,0)/bottomCount;
+   for(let i=0;i<n;i++)if(stacks[i]===0){for(let r=positive;r<n;r++)dist[i][r]=1/bottomCount;}
+ }
+ const equities=dist.map(row=>row.reduce((sum,prob,k)=>sum+prob*paid[k],0));
+ return {equities,probabilities:dist.map(x=>Array.from(x)),totalEquity:equities.reduce((a,b)=>a+b,0),totalPayout:paid.reduce((a,b)=>a+b,0)};
+}
+function icmCallDecision(params){
+ const {stacks,payouts,heroIndex,villainIndex,sb=50,bb=100,ante=12}=params;
+ const n=stacks.length,h=heroIndex,v=villainIndex;
+ if(h===v || h<0 || v<0 || h>=n || v>=n)throw Error('Verschiedene Spieler für Hero und Gegner auswählen');
+ const forced=stacks.map((s,i)=>Math.min(s,ante+(i===n-2?sb:0)+(i===n-1?bb:0)));
+ const after=stacks.map((s,i)=>s-forced[i]);const dead=forced.reduce((a,b)=>a+b,0);
+ const risk=Math.min(after[h],after[v]);if(risk<=0)throw Error('All-in nicht berechenbar bei Stack 0');
+ const fold=after.slice();fold[v]+=dead;
+ const win=after.slice();win[h]+=dead+risk;win[v]-=risk;
+ const lose=after.slice();lose[h]-=risk;lose[v]+=dead+risk;
+ const f=icmExact(fold,payouts).equities[h];const w=icmExact(win,payouts).equities[h];const l=icmExact(lose,payouts).equities[h];
+ const icmThreshold=(f-l)/(w-l),chipThreshold=risk/(dead+2*risk);
+ return {icmThreshold,chipThreshold,riskPremium:icmThreshold-chipThreshold,heroEquityFold:f,heroEquityWin:w,heroEquityLose:l,risk,dead,stacksIfFold:fold,stacksIfWin:win,stacksIfLose:lose};
+}
+const api={RANKS,POSITIONS,PALETTE,PROFILE_STYLES,handKey,handKeys,handWeight,handInfo,equityAgainst,baseOpenTarget,strengthOrder,getContext,computeMatrix,icmExact,icmCallDecision,payoutPool};
+if(typeof module!=='undefined'&&module.exports)module.exports=api;else global.PokerModel=api;
+})(globalThis);
+</script>
+<script>
+'use strict';
+const M=PokerModel,D=window.POKER_DATA;
+const by=id=>document.getElementById(id);let current=null,selectedHand='AKs',lastProfile='C',lastSpot='RFI',prevPlayers=8;
+function fmt(x,n=1){return Number(x).toLocaleString('de-DE',{minimumFractionDigits:n,maximumFractionDigits:n})}
+function pct(x,n=1){return fmt(x,n)+' %'}
+function col(action){return M.PALETTE[action]||'#34445b'}
+function htmlOptions(s,opts,value){s.innerHTML=opts.map(([v,label])=>`<option value="${v}"${String(v)===String(value)?' selected':''}>${label}</option>`).join('')}
+function selectedInputs(){return {profile:by('profile').value,level:+by('level').value,players:+by('players').value,position:by('heroPos').value,opener:by('villainPos').value,heroChips:+by('heroChips').value,villainChips:+by('villainChips').value,spot:by('spot').value,openBB:+by('openBB').value,threebetBB:+by('threebetBB').value,opponentStyle:by('opponentStyle').value};}
+function init(){
+ htmlOptions(by('profile'),Object.entries(D.profiles).map(([k,p])=>[k,p.name]),'C');
+ setupProfile(true);
+ for(const id of ['level','players','heroPos','villainPos','heroChips','villainChips','openBB','threebetBB','opponentStyle'])by(id).addEventListener('change',()=>{if(id==='players')refreshSeats(false);if(id==='heroPos')refreshVillain();render()});
+ by('profile').addEventListener('change',()=>setupProfile(false));
+ by('spot').addEventListener('change',()=>{refreshSeats(true);render()});
+ for(const id of ['heroChips','villainChips','openBB','threebetBB'])by(id).addEventListener('input',debounce(render,180));
+ by('copyChart').addEventListener('click',copyCsv);by('copyText').addEventListener('click',copyCompact);by('printChart').addEventListener('click',()=>window.print());
+ by('entries').addEventListener('input',updatePool);by('prizePaid').addEventListener('input',updatePool);
+ by('runICM').addEventListener('click',()=>{runICM();render()});
+ by('useICM').addEventListener('change',render);runICM();
+}
+function debounce(fn,delay){let t;return function(){clearTimeout(t);t=setTimeout(fn,delay)}}
+function setupProfile(initial){
+ const key=by('profile').value,p=D.profiles[key],currentLvl=Number(by('level').value)||1;
+ const lvl=p.levels.some(x=>x.level===currentLvl)?currentLvl:1;
+ htmlOptions(by('level'),p.levels.map(l=>[l.level,`Level ${l.level} · ${l.sb}/${l.bb}`]),lvl);
+ by('heroChips').value=p.startstack;by('villainChips').value=p.startstack;
+ by('entries').value=p.payout_entries||p.prize_entries_snapshot||65;by('prizePaid').value=p.prize_count_snapshot||10;
+ prevPlayers=p.tablesize;
+ htmlOptions(by('players'),Array.from({length:p.finaltable?8:7},(_,i)=>{const n=i+2;return [n,`${n} Spieler${n===p.finaltable?' (Finaltisch)':''}`]}),p.tablesize);
+ refreshSeats(true);lastProfile=key;updatePool();render();
+}
+function refreshSeats(useDefaults){
+ const seats=M.POSITIONS[+by('players').value],spot=by('spot').value;
+ const desired=useDefaults?(spot==='3BET'?'BTN':spot==='RFI'?'BTN':'BTN'):by('heroPos').value;
+ let hero=seats.includes(desired)?desired:seats[Math.max(0,seats.length-3)];
+ if(spot==='RFI'&&hero==='BB')hero=seats[seats.length-2];
+ if((spot==='OPEN'||spot==='JAM') && seats.indexOf(hero)===0)hero=seats[seats.length-3];
+ if(spot==='3BET' && hero==='BB')hero=seats[seats.length-3];
+ htmlOptions(by('heroPos'),seats.map(x=>[x,x]),hero);refreshVillain();
+}
+function refreshVillain(){
+ const seats=M.POSITIONS[+by('players').value],spot=by('spot').value,hero=by('heroPos').value;
+ let options=spot==='3BET'?seats.slice(seats.indexOf(hero)+1):seats.slice(0,seats.indexOf(hero));
+ if(spot==='RFI')options=seats.filter(x=>x!==hero);
+ if(!options.length)options=seats.filter(x=>x!==hero);
+ const current=by('villainPos').value;let desired=current;
+ if(!options.includes(desired)){desired=spot==='3BET'?(options.includes('BB')?'BB':options[0]):(options.includes('CO')?'CO':options[options.length-1]);}
+ htmlOptions(by('villainPos'),options.map(x=>[x,x]),desired);
+ by('villain-wrap').style.display=spot==='RFI'?'none':'';by('open-wrap').style.display=spot==='OPEN'||spot==='3BET'?'':'none';
+ by('threebet-wrap').style.display=spot==='3BET'?'':'none';
+}
+function render(){
+ try{
+  const input=selectedInputs(),p=D.profiles[input.profile],lvl=p.levels.find(l=>l.level===input.level),c=M.getContext(D,input);
+  const actualBB=c.stackBB,fullAnte=input.players*c.anteBB,prePot=1.5+fullAnte;
+  if(actualBB<2){
+    by('kpis').innerHTML=[['Blinds',`${fmt(lvl.sb,0)} / ${fmt(lvl.bb,0)}`],['Effektiver Stack',`${fmt(actualBB,2)} BB`],['Ante gesamt',`${fmt(fullAnte,2)} BB`],['Pot vor Aktion',`${fmt(prePot,2)} BB`],['Zeitintervall',`${p.interval_minutes} Min.`]].map(x=>`<div class="kpi"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
+    by('model-warning').innerHTML='<b>Stack unter 2 BB:</b> der Stack kann bereits durch Blind und Ante ganz oder nahezu ganz gebunden sein. Kein reguläres Raise-/Call-Chart berechnet.';
+    by('matrix').innerHTML='';by('stats').innerHTML='';by('hand-kv').innerHTML='';by('hand-ev').innerHTML='';current=null;renderBlinds(p,input.level,input.players);return;
+  }
+  const res=M.computeMatrix(D,input);let icmAdj=null;
+  if(input.spot==='JAM'&&by('useICM').checked){
+    const stacks=parseNumbers(by('icmStacks').value),payouts=parseNumbers(by('icmPayouts').value);
+    if(stacks.length!==input.players)throw Error('ICM-Modus: Die Anzahl der Stack-Einträge muss der Zahl ALLER verbleibenden Spieler entsprechen. Tischgröße auf Finaltisch umstellen oder ICM-Stacks anpassen.');
+    icmAdj=M.icmCallDecision({stacks,payouts,heroIndex:+by('icmHero').value-1,villainIndex:+by('icmVillain').value-1,sb:lvl.sb,bb:lvl.bb,ante:lvl.ante});
+    for(const h of Object.values(res.hands)){
+      const eq=h.showdownEq;h.icmEV=eq*(icmAdj.heroEquityWin-icmAdj.heroEquityFold)+(1-eq)*(icmAdj.heroEquityLose-icmAdj.heroEquityFold);
+      h.icmRequired=icmAdj.icmThreshold;h.action=h.icmEV>0?'CALL':'FOLD';h.ev=h.action==='CALL'?h.alternatives.CALL:0;
+      h.notes=(h.notes||[]).concat('ICM-Entscheidung aus exaktem Geldwert bei eingegebenen Stacks; Chip-EV separat');
+    }
+    for(const k of Object.keys(res.comboCounts))res.comboCounts[k]=0;
+    for(const h of Object.values(res.hands))res.comboCounts[h.action]+=h.weight;
+    for(const k of Object.keys(res.frequencies))res.frequencies[k]=100*res.comboCounts[k]/1326;
+  }
+  current=res;current.icmAdj=icmAdj;
+  by('kpis').innerHTML=[['Blinds',`${fmt(lvl.sb,0)} / ${fmt(lvl.bb,0)}`],['Effektiver Stack',`${fmt(actualBB,1)} BB`],['Ante gesamt',`${fmt(fullAnte,2)} BB`],['Pot vor Aktion',`${fmt(prePot,2)} BB`],['Zeitintervall',`${p.interval_minutes} Min.`]].map(x=>`<div class="kpi"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
+  let warnings=p.levels.length<15?'<b>Blindlevels > '+p.levels.length+' unbekannt.</b> Keine künstliche Fortschreibung. ':'<b>Blindlevel 1–37 aus Screenshots erfasst.</b> ';
+  warnings+=(icmAdj?'<b>ICM-Call-Modus aktiv:</b> Für Calls gegen All-in sind die eingegebenen Stacks und Auszahlungen berücksichtigt. Andere Aktionen bleiben Chip-EV-Modell. ':'Turnier-ICM ist nicht automatisch in die Preflop-Charts eingerechnet. ')+'Gegnerwahrscheinlichkeiten sind angenommene Parameter, keine beobachteten Daten.';
+  by('model-warning').innerHTML=warnings;
+  by('chart-description').textContent=`${input.players}-Max · ${input.spot==='RFI'?'unopened':input.spot==='OPEN'?'vs. Open-Raise':input.spot==='3BET'?'vs. 3-Bet':'vs. All-in'} · ${input.position}${input.spot==='RFI'?'':' gegen '+input.opener} · ${fmt(actualBB,1)} BB effektiv. Klicke eine Hand für Equity und Aktions-EV.`;
+  by('legend').innerHTML=Object.entries(M.PALETTE).map(([k,color])=>`<span><i class="dot" style="background:${color}"></i>${k==='JAM'?'ALL-IN':k==='RAISE'?'OPEN-RAISE':k==='LIMP'?'LIMP':k}</span>`).join('');
+  const chart=by('matrix');chart.innerHTML='';
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+    const key=M.handKey(i,j),data=res.hands[key];const btn=document.createElement('button');btn.type='button';btn.className='cell'+(i===j?' pair':'')+(key===selectedHand?' active':'');btn.style.background=col(data.action);
+    btn.textContent=key;btn.title=`${key}: ${data.action} | EV ≈ ${fmt(data.ev,2)} BB | Stärke-Rang ${pct(data.percentile*100,1)}`;
+    btn.setAttribute('aria-label',key+' '+data.action);btn.addEventListener('click',()=>{selectedHand=key;showHand();chart.querySelectorAll('.cell.active').forEach(x=>x.classList.remove('active'));btn.classList.add('active')});
+    chart.appendChild(btn);
+  }
+  by('stats').innerHTML=Object.entries(res.frequencies).filter(([k,v])=>v>.05).map(([k,v])=>`<div class="stat"><i class="dot" style="background:${col(k)}"></i><div><b>${pct(v)}</b> <small>${k==='JAM'?'ALL-IN':k} · ${res.comboCounts[k]} Kombinationen</small></div></div>`).join('');
+  if(!res.hands[selectedHand])selectedHand='AKs';showHand();renderBlinds(p,input.level,input.players);
+ }catch(e){by('model-warning').innerHTML='<span class="error">Berechnungsfehler: '+escapeHtml(e.message)+'</span>';by('matrix').innerHTML='';by('stats').innerHTML='';current=null;console.error(e)}
+}
+function escapeHtml(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+function showHand(){if(!current)return;const h=current.hands[selectedHand],ctx=current.context;
+ by('hand-name').textContent=selectedHand;by('hand-action').textContent=`Modellentscheidung: ${h.action==='JAM'?'ALL-IN':h.action}`;by('hand-action').style.color=col(h.action);
+ const rows=[['Stärke-Rang',pct(h.percentile*100,1)],['Karten-Kombinationen',h.weight],['Gegner-Referenzrange',h.referencePct!=null?pct(h.referencePct*100):'–'],['Showdown-Equity',h.showdownEq!=null?pct(h.showdownEq*100):'–'],['Realisierte Equity (Modell)',h.eqRealized!=null?pct(h.eqRealized*100):'–']];
+ if(h.requiredEq!=null)rows.push(['Min. Equity Chip-EV',pct(h.requiredEq*100)]);
+ if(h.icmRequired!=null)rows.push(['Min. Equity ICM',pct(h.icmRequired*100)]);
+ if(h.callCost!=null)rows.push(['Zusätzliche Kosten',fmt(h.callCost,2)+' BB']);
+ by('hand-kv').innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+ by('hand-ev').innerHTML=Object.entries(h.alternatives).filter(([a,v])=>Number.isFinite(v)&&v>-100000).map(([a,v])=>`<div class="ev-pill" style="border-color:${col(a)}"><span>${a} · Chip-EV</span><b>${v>=0?'+':''}${fmt(v,2)} BB</b></div>`).join('')+(h.icmEV!=null?`<div class="ev-pill" style="border-color:#ffd172"><span>CALL · ICM-Differenz</span><b>${h.icmEV>=0?'+':''}${fmt(h.icmEV,2)} €</b></div>`:'');
+ by('hand-note').textContent='EV-Werte sind bedingte Chip-EV-Modellschätzungen gegen die gewählte gegnerische Range, keine exakt gelösten GTO-Frequenzen. '+(h.limitedByOpenRange?'Hand außerhalb der kalibrierten Eröffnungsrange. ':'')+(h.error||'')+' '+(h.notes||[]).join(' · ');
+}
+function renderBlinds(p,lvl,players){
+ by('blindtable').querySelector('tbody').innerHTML=p.levels.map(l=>`<tr class="${l.level===lvl?'active':''}"><td>${l.level}</td><td>${fmt(l.sb,0)} / ${fmt(l.bb,0)}</td><td>${fmt(l.ante,0)}</td><td>${fmt(players*l.ante/l.bb,2)}</td><td>${fmt(p.startstack/l.bb,1)}</td><td>+ ${fmt((l.level-1)*p.interval_minutes,0)} Min.</td></tr>`).join('');
+}
+function chartCSV(){
+ let lines=['Hand;Position;Situation;Gegnerposition;Stack_BB;Aktion;ChipEV_BB_Modell;Gegner_Range_Pct;Showdown_Equity_Pct;Kombinationen;Fold_EV_BB;Call_EV_BB;Raise_EV_BB;3bet_EV_BB;4bet_EV_BB;Jam_EV_BB;Limp_EV_BB;ICM_EV_EUR;ICM_MindestEquity'];
+ const s=current.context,fmtcsv=v=>v===undefined||v===null||v< -99999?'':String(Math.round(v*10000)/10000).replace('.',',');
+ for(const key of current.handOrder){
+  const h=current.hands[key],a=h.alternatives;
+  lines.push([key,s.position,current.spot,s.opener,fmtcsv(s.stackBB),h.action,fmtcsv(h.ev),fmtcsv(100*h.referencePct),fmtcsv(100*h.showdownEq),h.weight,...['FOLD','CALL','RAISE','3BET','4BET','JAM','LIMP'].map(t=>fmtcsv(a[t])),fmtcsv(h.icmEV),fmtcsv(h.icmRequired*100)].join(';'));
+ }
+ return lines.join('\n');
+}
+async function writeClipboard(text){
+ let result='';try{await navigator.clipboard.writeText(text);result='In Zwischenablage kopiert.'}catch(e){
+  const area=by('copyFallback');area.value=text;area.style.display='block';area.focus();area.select();try{document.execCommand('copy');result='Kopiert; zusätzlich steht der Text unten bereit.'}catch(x){result='Bitte Text unten manuell auswählen und kopieren.'}
+ }by('copyStatus').textContent=result;
+}
+function copyCsv(){if(current)writeClipboard(chartCSV())}
+function copyCompact(){if(!current)return;let z={};for(const [k,h] of Object.entries(current.hands)){if(!z[h.action])z[h.action]=[];z[h.action].push(k)};
+ writeClipboard(Object.entries(z).map(([k,v])=>k+': '+v.join(' ')).join('\n'));
+}
+function updatePool(){const p=D.profiles[by('profile').value],N=Math.max(1,+by('entries').value||1),paid=+by('prizePaid').value||0;
+ let html=`<b>Entries: ${fmt(N,0)}</b> · eingegebene bezahlte Plätze: ${paid}<br>`;
+ const pool=M.payoutPool(p,N);
+ if(pool!=null){const fees=p.buyin_to_pool_usd*N;
+   if(p.guarantee_usd)html+=`Garantierter/errechneter Preispool: <b>${fmt(pool,2)} $</b> · Beiträge: ${fmt(fees,2)} $ · Garantiedifferenz: ${fmt(Math.max(0,pool-fees),2)} $.`;
+   else html+=`Preisgeldbeiträge: <b>${fmt(fees,2)} $</b>. Gesamtpreispool nicht bekannt, weil die Garantie nicht vorliegt.`;
+ }
+ else html+='Keine ausreichenden Angaben für einen garantierten Preispool.';
+ if(p.payouts){const known=N===p.payout_entries&&paid===p.payouts.length;html+=`<br>${known?'Aktuelle bekannte Auszahlung:':'Die hier dokumentierte Auszahlung ist bei dieser Entry-Zahl NICHT bestätigt:'} <b>${fmt(p.payouts.reduce((a,b)=>a+b,0),2)} €</b> auf ${p.payouts.length} Plätze (Snapshot bei ${p.payout_entries} Entries).`}
+ by('poolResult').innerHTML=html;
+ by('prizetable').querySelector('tbody').innerHTML=(p.payouts||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${fmt(x,2)} €</td><td>${pct(x/(p.payouts.reduce((a,b)=>a+b,0))*100,2)}</td></tr>`).join('')||'<tr><td colspan="3">Preisgeldstaffel unbekannt</td></tr>';
+}
+function parseNumbers(s){const parts=s.trim().replace(/\s+/g,'').split(/[;\n,]+/).filter(Boolean);const nums=parts.map(s=>Number(s));if(nums.some(x=>!Number.isFinite(x)))throw Error('Nur Zahlen, durch Komma getrennt. Dezimalpunkt für Eurobeträge verwenden.');return nums;}
+function runICM(){
+ try{const stacks=parseNumbers(by('icmStacks').value),payouts=parseNumbers(by('icmPayouts').value),h=Number(by('icmHero').value)-1,v=Number(by('icmVillain').value)-1;
+ if(stacks.length<2||stacks.length>10)throw Error('Bitte 2–10 verbleibende Spieler eingeben');
+ const equity=M.icmExact(stacks,payouts),res=M.icmCallDecision({stacks,payouts,heroIndex:h,villainIndex:v,sb:current?.context.levelInfo.sb||50,bb:current?.context.levelInfo.bb||100,ante:current?.context.levelInfo.ante||12});
+ by('icmResult').innerHTML=`<div class="icm-result"><div class="kpi"><span>Chip-EV benötigte Equity</span><strong>${pct(res.chipThreshold*100,1)}</strong></div><div class="kpi"><span>ICM benötigte Equity</span><strong>${pct(res.icmThreshold*100,1)}</strong></div><div class="kpi"><span>ICM-Risikoprämie</span><strong>${res.riskPremium>=0?'+':''}${pct(res.riskPremium*100,1)}</strong></div></div><p class="note">Hero-Geldwert: nach Fold ${fmt(res.heroEquityFold,2)} €, nach gewonnenem All-in ${fmt(res.heroEquityWin,2)} €, nach verlorenem All-in ${fmt(res.heroEquityLose,2)} €. Diese Schwelle verwendet <b>die eingegebenen Stacks aller verbleibenden Spieler</b> sowie die aktuelle Blindhöhe. Über die gegebene Liste wird der ICM-Preisgeldwert exakt mittels Teilmengen-Dynamik berechnet.</p><p class="note">Prüfung: Summe der ICM-Geldwerte ${fmt(equity.totalEquity,2)} € = Summe eingetragener Preisgelder ${fmt(equity.totalPayout,2)} €.</p>`;
+ }catch(e){by('icmResult').innerHTML='<p class="error">'+escapeHtml(e.message)+'</p>'}
+}
+window.addEventListener('DOMContentLoaded',init);
+</script>
+
+<script id="mobile-learning-app">
+(function(){
+'use strict';
+let tab='trainer',quizHand=null,stats={right:0,total:0};
+const R='AKQJT98765432';
+function el(tag,attrs={},html=''){const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='class')e.className=v;else e.setAttribute(k,v)}e.innerHTML=html;return e;}
+function label(action){return ({FOLD:'Fold',CALL:'Call',RAISE:'Raise',JAM:'All-in',LIMP:'Limp', '3BET':'3-Bet','4BET':'4-Bet'})[action]||action;}
+function getHand(){const a=document.getElementById('q-r1').value,b=document.getElementById('q-r2').value,t=document.getElementById('q-s').value;if(a===b)return a+a;const x=R.indexOf(a)<R.indexOf(b)?a:b,y=x===a?b:a;return x+y+t}
+function chooseHand(){selectedHand=getHand();render();document.getElementById('q-selected').textContent=selectedHand;}
+function loadStats(){try{const v=JSON.parse(localStorage.getItem('LernPokerQuizStats')||'null');if(v&&Number.isFinite(v.total))stats=v}catch(_){}}
+function saveStats(){try{localStorage.setItem('LernPokerQuizStats',JSON.stringify(stats))}catch(_){}}
+function updateStats(){document.getElementById('quiz-status').textContent=stats.total+' Fragen · '+stats.right+' richtig'+(stats.total?' ('+Math.round(stats.right*100/stats.total)+' %)':'');}
+function newQuiz(){
+ if(!current||!current.hands)return;
+ const keys=M.handKeys(),hand=keys[Math.floor(Math.random()*keys.length)];
+ quizHand=hand;
+ document.getElementById('quiz-card-hand').textContent=hand;
+ document.getElementById('quiz-feedback').textContent='Wähle deine Entscheidung.';
+ const options=[...new Set(Object.values(current.hands).map(x=>x.action))];
+ if(!options.includes('FOLD'))options.unshift('FOLD');
+ const box=document.getElementById('quiz-actions');box.innerHTML='';
+ for(const a of options){
+   const b=el('button',{type:'button'},label(a));
+   b.addEventListener('click',()=>{
+     const good=current.hands[quizHand].action,hit=a===good;
+     stats.total++;if(hit)stats.right++;saveStats();updateStats();
+     document.getElementById('quiz-feedback').textContent=(hit?'Richtig. ':'Nicht ganz. ')+'Modell-Empfehlung: '+label(good)+' für '+quizHand+'.';
+     box.querySelectorAll('button').forEach(x=>x.disabled=true);
+   });box.appendChild(b);
+ }
+ updateStats();
+}
+function selectTab(t){
+ tab=t;
+ document.querySelectorAll('.nav-mobile button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===t);b.setAttribute('aria-selected',String(b.dataset.tab===t))});
+ const form=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent'),picker=document.getElementById('quick-picker'),quiz=document.getElementById('mobile-quiz'),icm=document.getElementById('mobile-icm');
+ const modelSections=[...document.querySelectorAll('.container > .panel')].filter(x=>x!==form && x!==matrix && x!==picker && x!==quiz && x!==icm);
+ form.hidden=t==='icm';picker.hidden=!(t==='trainer'||t==='matrix');
+ matrix.hidden=!(t==='trainer'||t==='matrix');
+ quiz.hidden=t!=='quiz';icm.hidden=t!=='icm';
+ for(const p of modelSections)p.hidden=true;
+ document.querySelectorAll('.extra-panel').forEach(x=>x.hidden=true);
+ const compact=t==='trainer';
+ for(const selector of ['.grid-wrap','.stats','.legend','.actions-row','#chart-description']){
+  const v=matrix.querySelector(selector);if(v)v.style.display=compact?'none':'';
+ }
+ if(t==='quiz')newQuiz();
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function initMobile(){
+ const base=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent');
+ if(!base||!matrix)return;
+ const nav=el('nav',{class:'nav-mobile','aria-label':'Lernansichten'},'<button data-tab="trainer" class="active" aria-selected="true">Empfehlung</button><button data-tab="matrix" aria-selected="false">169 Hände</button><button data-tab="quiz" aria-selected="false">Lernen</button><button data-tab="icm" aria-selected="false">ICM</button>');
+ base.before(nav);
+ const picker=el('section',{class:'panel',id:'quick-picker'},'<h2>Meine Karten</h2><div class="mobile-pick"><label>Karte 1<select id="q-r1"></select></label><label>Karte 2<select id="q-r2"></select></label><label>Gleichfarbig?<select id="q-s"><option value="s">Suited</option><option value="o">Offsuit</option></select></label></div><div id="q-selected" class="mobile-hand">AKs</div>');
+ base.after(picker);
+ for(const id of ['q-r1','q-r2'])document.getElementById(id).innerHTML=[...R].map(x=>'<option>'+x+'</option>').join('');
+ document.getElementById('q-r1').value='A';document.getElementById('q-r2').value='K';
+ for(const id of ['q-r1','q-r2','q-s'])document.getElementById(id).addEventListener('change',chooseHand);
+ const quiz=el('section',{class:'quiz-card',id:'mobile-quiz'},'<h2>Preflop-Quiz</h2><p class="quiz-situation">Bewerte eine zufällige Hand für deine eingestellte Situation.</p><p id="quiz-status" class="quiz-situation"></p><div class="quiz-hand" id="quiz-card-hand">–</div><p class="quiz-situation">Was wäre deine Entscheidung?</p><div class="quiz-actions" id="quiz-actions"></div><div class="quiz-feedback" id="quiz-feedback"></div><button id="quiz-next" class="btn primary" type="button">Nächste Hand</button><button id="quiz-reset" class="btn" type="button">Lernstatistik löschen</button>');
+ picker.after(quiz);
+ document.getElementById('quiz-next').addEventListener('click',newQuiz);
+ document.getElementById('quiz-reset').addEventListener('click',()=>{stats={right:0,total:0};saveStats();updateStats();newQuiz()});
+ const icm=document.querySelector('.two-col .panel:last-child');if(icm){icm.id='mobile-icm';quiz.after(icm)}
+ nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
+ loadStats();updateStats();selectTab('trainer');chooseHand();
+}
+window.addEventListener('DOMContentLoaded',initMobile);
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(e=>console.warn('Offline-Cache',e)));
+}
+})();
+</script>
+
+</body></html>
