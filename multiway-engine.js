@@ -7,6 +7,7 @@
 'use strict';
 const M=global.PokerModel;
 if(!M)return;
+M.PALETTE.CHECK='#2186af';
 const LIMIT=9;
 const clip=(x,a,b)=>Math.max(a,Math.min(b,x));
 const round=x=>Math.round(x*10000)/10000;
