@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='lernpoker-v14-offline';
+const CACHE='lernpoker-v15-offline';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon.svg','./quick-ui.css','./quick-ui.js','./multiway-engine.js','./raise-sizing.js','./mix-strategy.js','./recommendation-ui.js','./live-test.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

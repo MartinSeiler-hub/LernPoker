@@ -30,9 +30,8 @@ function showAction(x){
  return s;
 }
 function showCards(){
- const labels=['card-one','card-two'].map(id=>$(id)?.textContent||'');
- const cards=labels.map(label=>label.match(/([AKQJT98765432][♠♥♦♣])\s*$/)?.[1]).filter(Boolean);
- return cards.length===2?cards.join(' '):(typeof selectedHand==='string'?selectedHand:'–');
+ // LiveTest captures a hand class, not specific physical suits.
+ return typeof selectedHand==='string'?selectedHand:'–';
 }
 function draw(){
  if(global.crypto?.getRandomValues){
@@ -42,6 +41,7 @@ function draw(){
 }
 function selection(){
  if(!global.LernPokerMix||typeof selectedInputs!=='function'||typeof selectedHand!=='string')return {error:'Strategie noch nicht geladen'};
+ if([...document.querySelectorAll('.live-stack-exact input')].some(input=>!input.checkValidity()))return {error:'Stack prüfen: eigene BB 2–1000, Gegner 1–1000.'};
  const inputs=selectedInputs();
  if(![6,8].includes(Number(inputs.players)))return {error:'Bitte 6-Max oder 8-Max wählen.'};
  if(document.querySelector('.panel.accent')?.classList.contains('quick-blocked'))return {error:plain($('quick-range-limit')?.textContent||'Eingaben prüfen.')};
@@ -53,7 +53,7 @@ function selection(){
  return {inputs,training,hand:selectedHand,strategy};
 }
 function lock(){
- if(data.active){$('live-message').textContent='Diese Empfehlung ist bereits für die laufende Hand fixiert.';return;}
+ if(data.active){$('live-message').textContent='Hand bereits fixiert.';return;}
  const v=selection();
  if(v.error){$('live-message').textContent=v.error;return;}
  const unit=draw();
@@ -70,7 +70,7 @@ function lock(){
   mix:v.strategy.options.map(o=>({action:o.action,toBB:o.toBB,prob:o.p,bluff:o.bluff})),
   randomUnit:unit,model:'EV-gewichteter Trainingsmix – nicht solverbestätigt'
  };
- persist();render();$('live-message').textContent='Empfehlung für diese Hand fixiert. Erst nach der Hand dokumentieren.';
+ persist();render();$('live-message').textContent='Fixiert.';
 }
 function freezeInputs(){
  const freeze=!!data.active;
@@ -107,7 +107,7 @@ function chooseTable(players){
   count.value=String(players);
   count.dispatchEvent(new Event('change',{bubbles:true}));
  }
- $('live-message').textContent=players+' Spieler ausgewählt.';
+ $('live-message').textContent='';
  render();
 }
 function clearEntry(){
@@ -157,7 +157,7 @@ function save(status='completed'){
  data.active=null;
  persist();
  clearEntry();render();
- $('live-message').textContent=status==='aborted'?'Abgebrochene Hand im Protokoll vermerkt.':'Hand dokumentiert. Du kannst die nächste vorbereiten.';
+ $('live-message').textContent=status==='aborted'?'Abgebrochen.':'Gespeichert.';
 }
 function csv(){
  const fields=['Zeit','Status','Turnierprofil','Position','Hand','Physische Karten','Stack BB',
@@ -208,14 +208,15 @@ function renderHistory(){
 function render(){
  const active=data.active;
  const live=tab==='live';
- $('live-sticky').hidden=!live;
+ document.body.classList.toggle('live-mode',live);
+ $('live-sticky').hidden=!live||!active;
  $('live-test').hidden=!live;
  const unlocked=$('live-prep'),locked=$('live-locked');
  unlocked.hidden=!!active;locked.hidden=!active;
  const status=$('live-edit-status');
  if(status){
   status.hidden=!active;
-  status.textContent=active?'Diese Hand ist fixiert. Zum Eingeben einer neuen Hand zuerst unten abschließen oder abbrechen.':'';
+  status.textContent=active?'Hand fixiert':'';
  }
  const review=$('live-summary');
  if(review){review.hidden=!!active;if(active)review.open=false;}
@@ -259,17 +260,13 @@ function init(){
  nav.before(sticky);
  const shell=document.createElement('section');
  shell.id='live-entry-shell';shell.className='live-entry-shell';shell.hidden=true;
- shell.innerHTML='<h2>LiveTest · Situation eingeben</h2>'+
-  '<div class="live-format"><span>Spieler am Tisch</span><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+
+ shell.innerHTML='<div class="live-format" role="group" aria-label="Spieler am Tisch"><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+
   '<div id="live-input-slot"></div>';
  picker.after(shell);
  const panel=document.createElement('section');panel.className='panel live-panel';panel.id='live-test';panel.hidden=true;
- panel.innerHTML='<h2>LiveTest · Empfehlung &amp; Protokoll</h2>'+
-  '<div class="live-caption">Privater Test mit Zustimmung aller Beteiligten · ohne Geld · Ergebnisse nur auf diesem Gerät</div>'+
-  '<div id="live-prep"><p>Karten, Position, Stacks und Aktionen direkt oben eingeben. Danach eine Empfehlung ziehen und für die Hand fixieren.</p>'+ 
-  '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
+ panel.innerHTML='<div id="live-prep"><button type="button" id="live-lock" class="btn primary">Empfehlung fixieren</button></div>'+
   '<div id="live-locked" hidden><div id="live-edit-status" class="live-edit-status"></div>'+
-  '<button type="button" id="live-new-hand" class="btn live-new-hand">Fixierte Hand abbrechen und neue eingeben</button>'+
+  '<button type="button" id="live-new-hand" class="btn live-new-hand">Abbrechen · neue Hand</button>'+
   '<div id="live-locked-hand" class="live-locked-hand"></div>'+
   '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
 
@@ -282,7 +279,7 @@ function init(){
   '<option value="loss">Verloren</option><option value="split">Geteilt</option><option value="other">Sonstiges</option></select></label>'+
   '<label>Chip-Ergebnis (BB, optional)<input id="live-delta" type="text" inputmode="decimal" placeholder="z. B. -4,5 oder +8"></label></div>'+
   '<label class="live-note-label">Notiz (optional)<textarea id="live-notes" rows="2" maxlength="400" placeholder="Beobachtung nach der Hand"></textarea></label>'+
-  '<div class="live-save-actions"><button type="button" id="live-save" class="btn primary">Hand abschließen und speichern</button>'+
+  '<div class="live-save-actions"><button type="button" id="live-save" class="btn primary">Hand speichern</button>'+
   '<button type="button" id="live-abort" class="btn">Hand abbrechen (protokollieren)</button></div></div>'+
   '<p id="live-message" role="status" class="live-message"></p>'+
   '<p id="live-storage-warning" class="live-storage-warning"></p>'+

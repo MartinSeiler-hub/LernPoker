@@ -10,6 +10,8 @@ const decimal=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maxim
 const digits=v=>String(v||'').replace(/\D/g,'').slice(0,5);
 const tenth=v=>{const s=digits(v);return s?Number(s)/10:NaN;};
 const mask=n=>String(Math.round(Number(n)*10));
+// LiveTest presets use explicit representative stacks; exact BB entry remains available.
+const LIVE_STACK_RANGES=[{label:'<10',value:8},{label:'10–20',value:15},{label:'20–30',value:25},{label:'30–50',value:40},{label:'50–80',value:65},{label:'80+',value:100}];
 function init(){
  const form=document.querySelector('.form-panel'),picker=$('quick-picker'),nav=document.querySelector('.nav-mobile');
  if(!form||!picker||!nav||!window.PokerModel)return;
@@ -19,6 +21,8 @@ function init(){
  const mobilePick=picker.querySelector('.mobile-pick');
  const stackBox=el('div','quick-stack','<label for="quick-bb">Mein Stack · BB</label><div class="quick-stack-line"><input id="quick-bb" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="5" aria-describedby="bb-caption bb-example" value="800"><strong id="bb-caption">80,0 BB</strong></div><small id="bb-example">Nur Ziffern: 154 ergibt 15,4 BB; 80 ergibt 8,0 BB.</small>');
  mobilePick.before(stackBox);
+ const liveStacks=el('section','live-only live-stacks','<div class="live-stack-title"><h3>Stacks · BB</h3><button type="button" id="live-stack-reset">Alle = ich</button></div><div id="live-stack-ranges"></div>');
+ stackBox.before(liveStacks);
  const heroPos=$('heroPos');heroPos.closest('.group').hidden=true;
  const positionBox=el('section','quick-section','<h3>Meine Position</h3><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
  stackBox.after(positionBox);
@@ -28,12 +32,37 @@ function init(){
  mobilePick.hidden=true;
  const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1 · A♠</button><button id="card-two" type="button">Karte 2 · K♠</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert für ausgewählte Karte wählen"></div><div class="quick-suit-buttons" id="quick-suits" role="group" aria-label="Farbe für ausgewählte Karte wählen"></div>');
  mobilePick.before(cards);
+ const liveCards=el('section','live-only live-direct-cards','');
+ for(let i=0;i<2;i++){
+  const card=el('div','live-direct-card','');
+  card.innerHTML='<strong id="live-card-label-'+i+'"></strong><div class="live-card-ranks" role="group" aria-label="Wert Karte '+(i+1)+'"></div>';
+  for(const r of RANKS){
+   const b=el('button','',r);b.type='button';b.dataset.rank=r;
+   b.setAttribute('aria-label','Karte '+(i+1)+': '+r);
+   b.addEventListener('click',()=>{cardRanks[i]=r;avoidDuplicate(i);updateCards(i);syncScenario();});
+   card.querySelector('.live-card-ranks').append(b);
+  }
+  liveCards.append(card);
+ }
+ const suitedChoice=el('div','live-suited-choice','<strong id="live-hand-class"></strong>');
+ suitedChoice.setAttribute('role','group');suitedChoice.setAttribute('aria-label','Suited oder offsuit');
+ for(const kind of ['s','o']){
+  const b=el('button','',kind);b.type='button';b.dataset.kind=kind;b.setAttribute('aria-label',kind==='s'?'s · suited':'o · offsuit');
+  b.addEventListener('click',()=>{
+   if(cardRanks[0]===cardRanks[1])return;
+   cardSuits=kind==='s'?['♠','♠']:['♠','♥'];updateCards();syncScenario();
+  });suitedChoice.append(b);
+ }
+ liveCards.append(suitedChoice);
+ picker.prepend(liveCards);
+ cards.classList.add('quick-original-cards');
  const action=el('section','quick-section',
   '<div class="quick-action-header"><h3>Aktionen der Gegner</h3><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
   '<div class="quick-mode-buttons" role="group" aria-label="Aktionsfolge"><button type="button" data-mode="before">Vor meiner Entscheidung</button><button type="button" data-mode="after">Nach meinem Raise</button></div>'+
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
+ const liveError=el('div','live-only live-input-error','');liveError.id='live-input-error';liveError.setAttribute('role','alert');action.append(liveError);
  const advanced=el('details','', '<summary>Weitere Angaben · Blindlevel und Tischgröße</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
  const icmControl=$('useICM');
  if(icmControl){icmControl.checked=false;icmControl.closest('.group').hidden=true;}
@@ -52,6 +81,50 @@ function init(){
   if(!seatStacks.has(pos))seatStacks.set(pos,{stack:Math.round(Math.max(2,heroBB()||20)*10),custom:false});
   return seatStacks.get(pos).stack/10;
  };
+ function renderLiveStacks(){
+  const box=$('live-stack-ranges');
+  // Keep the exact-value field focused while typing; refresh the surrounding ranges.
+  if(box.contains(document.activeElement)&&document.activeElement.matches('input')){
+   for(const row of box.children){
+    const value=row.dataset.position===heroPos.value?heroBB():getStack(row.dataset.position);
+    const input=row.querySelector('input');if(input!==document.activeElement)input.value=String(value);
+    for(const b of row.querySelectorAll('button')){
+     const chosen=Number(b.dataset.stackValue)===value;b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));
+    }
+   }
+   return;
+  }
+  box.replaceChildren();
+  for(const pos of [heroPos.value,...seats().filter(p=>p!==heroPos.value)]){
+   const hero=pos===heroPos.value,value=hero?heroBB():getStack(pos),name=hero?'Ich':pos;
+   const row=el('div','live-stack-row','');row.dataset.position=pos;row.setAttribute('role','group');row.setAttribute('aria-label',name+' Stack');
+   const exact=el('label','live-stack-exact',name);
+   const input=el('input','');input.type='number';input.inputMode='decimal';input.min=hero?'2':'1';input.max='1000';input.step='0.1';
+   input.value=Number.isFinite(value)?String(value):'';input.required=true;input.setAttribute('aria-label',name+' Stack exakt in BB');
+   const apply=value=>{
+    if(hero){$('quick-bb').value=mask(value);updateBb();}
+    else {setStack(pos,value,true);renderStacks();renderSeatRows();syncScenario();}
+   };
+   input.addEventListener('input',()=>{
+    input.setCustomValidity('');
+    const value=Number(input.value);
+    if(input.value!==''&&Number.isFinite(value)&&value>=Number(input.min)&&value<=1000){apply(value);}
+    else input.setCustomValidity('Stack zwischen '+input.min+' und 1000 BB eingeben.');
+   });
+   input.addEventListener('change',()=>{if(!input.checkValidity())input.reportValidity();});
+   exact.append(input);row.append(exact);
+   for(const range of LIVE_STACK_RANGES){
+    const b=el('button','',range.label);b.type='button';b.dataset.stackValue=String(range.value);
+    b.title=range.label+' BB → '+range.value+' BB';
+    b.setAttribute('aria-label',name+': '+range.label+' BB, rechnen mit '+range.value+' BB');
+    b.setAttribute('aria-pressed',String(value===range.value));
+    b.classList.toggle('active',value===range.value);
+    b.addEventListener('click',()=>apply(range.value));row.append(b);
+   }
+   box.append(row);
+  }
+ }
+ $('live-stack-reset').addEventListener('click',()=>$('quick-stack-reset').click());
  function setStack(pos,value,custom=true){
   if(!seats().includes(pos)||pos===heroPos.value||!Number.isFinite(value)||value<.1||value>1000)return false;
   const st=Math.round(value*10);
@@ -83,6 +156,7 @@ function init(){
    });
    wrap.append(heading,input,display);box.append(wrap);
   }
+  renderLiveStacks();
  }
  $('quick-stack-reset').addEventListener('click',()=>{
   for(const pos of seats())if(pos!==heroPos.value)setStack(pos,heroBB(),false);
@@ -128,8 +202,8 @@ function init(){
    cardSuits[changedIndex]=SUITS.find(s=>s.symbol!==cardSuits[other]).symbol;
   }
  }
- function updateCards(){
-  avoidDuplicate(activeCard-1);
+ function updateCards(changedIndex=activeCard-1){
+  avoidDuplicate(changedIndex);
   $('q-r1').value=cardRanks[0];$('q-r2').value=cardRanks[1];
   $('q-s').value=cardRanks[0]!==cardRanks[1]&&cardSuits[0]===cardSuits[1]?'s':'o';
   // Die bestehende 169-Hand-Auswertung nutzt weiterhin Rank + suited/offsuit intern.
@@ -151,6 +225,18 @@ function init(){
    b.setAttribute('aria-pressed',String(chosen));
   }
   $('q-selected').textContent=cardRanks[0]+cardSuits[0]+'   '+cardRanks[1]+cardSuits[1]+'   ·   '+selectedHand;
+  [...liveCards.querySelectorAll('.live-direct-card')].forEach((card,i)=>{
+   $('live-card-label-'+i).textContent='Karte '+(i+1)+' · '+cardRanks[i];
+   for(const b of card.querySelectorAll('[data-rank]')){
+    const chosen=b.dataset.rank===cardRanks[i];b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));
+   }
+  });
+  const pair=cardRanks[0]===cardRanks[1];
+  $('live-hand-class').textContent=selectedHand;
+  for(const b of suitedChoice.querySelectorAll('button')){
+   const chosen=!pair&&b.dataset.kind===(cardSuits[0]===cardSuits[1]?'s':'o');
+   b.disabled=pair;b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));
+  }
  }
  for(const r of RANKS){
   const b=el('button','',r);b.type='button';b.addEventListener('click',()=>{
@@ -258,7 +344,8 @@ function init(){
      });
      betGroup.append(bet,betValue);fields.append(betGroup);
     }
-    const stackGroup=el('label','','Stack (BB)');
+    const stackGroup=el('label','quick-action-stack','Stack (BB)');
+    if(s.action==='allin')fields.classList.add('quick-allin-numbers');
     const stack=el('input','');stack.type='text';stack.inputMode='numeric';stack.pattern='[0-9]*';stack.maxLength=5;stack.value=String(s.stack);
     stack.setAttribute('aria-label',pos+' Stack in Zehntel-BB');
     const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
@@ -290,6 +377,7 @@ function init(){
  function blocked(message){
   currentStatus=message;accent.classList.toggle('quick-blocked',Boolean(message));
   $('quick-range-limit').textContent=message||'';
+  $('live-input-error').textContent=message||'';
   const quiz=nav.querySelector('[data-tab="quiz"]');if(quiz)quiz.disabled=Boolean(message);
  }
  function syncScenario(){

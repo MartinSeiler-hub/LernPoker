@@ -313,3 +313,65 @@
  background:#674a25;border:1px solid #d4a35b;color:#fff6e7;
  font:750 13px system-ui;border-radius:9px;cursor:pointer}
 #live-new-hand:focus-visible{outline:3px solid #ffdf97;outline-offset:2px}
+
+/* Compact LiveTest input; the other learning views keep their existing controls. */
+.live-only{display:none!important}
+.live-mode .live-only{display:block!important}
+.live-mode .container>header,.live-mode footer,.live-mode .footer,
+.live-mode #quick-picker>h2,.live-mode .quick-stack,.live-mode .quick-all-stacks,
+.live-mode .quick-original-cards,.live-mode #q-selected,.live-mode #quick-advanced,
+.live-mode #quick-case-status,.live-mode #live-sticky-meta,
+.live-mode #live-edit-status,.live-mode #live-locked-action{display:none!important}
+.live-mode #live-entry-shell{padding:0;border:0;background:transparent;margin-top:6px}
+.live-mode #live-entry-shell #quick-picker{padding:0;margin:0;border:0;background:transparent}
+.live-mode #live-input-slot{margin:0}
+.live-mode #live-entry-shell .live-format{margin:0 0 8px;gap:6px}
+.live-mode .live-format button{min-height:40px;padding:6px 12px;flex:1}
+.live-mode .nav-mobile{margin:0 0 8px}
+.live-mode .quick-section{padding-top:8px;margin:8px 0}
+.live-mode .quick-section h3{font-size:13px;margin:0 0 5px}
+.live-mode .quick-position-buttons{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.live-mode .quick-position-choice{min-height:38px;padding:5px 2px}
+.live-direct-cards{border:1px solid #425e7d;border-radius:10px;padding:8px;background:#102238}
+.live-direct-card+ .live-direct-card{margin-top:9px}
+.live-direct-card>strong{display:block;font-size:13px;color:#ffe1a5;margin-bottom:4px}
+.live-card-ranks{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.live-card-ranks button,.live-suited-choice button,.live-stack-row>button{
+ min-width:0;min-height:40px;padding:5px 0;border:1px solid #577596;border-radius:7px;
+ background:#182d44;color:#edf5ff;font:750 16px system-ui;cursor:pointer;touch-action:manipulation}
+.live-card-ranks button.active,.live-suited-choice button.active,.live-stack-row>button.active{
+ background:#d49b43;border-color:#ffdc90;color:#101b2a}
+.live-card-ranks button:focus-visible,.live-suited-choice button:focus-visible,
+.live-stack-row>button:focus-visible,.live-stack-exact input:focus-visible{outline:3px solid #ffe0a2;outline-offset:1px}
+.live-suited-choice{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;align-items:center}
+.live-suited-choice>strong{font-size:22px;color:#ffe2a5;text-align:center}
+.live-suited-choice button{font-size:20px}
+.live-suited-choice button:disabled{opacity:.3;cursor:default}
+.live-stacks{margin:8px 0}
+.live-stack-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.live-stack-title h3{font-size:13px;margin:0}
+#live-stack-reset{border:1px solid #607c98;background:#203851;color:#e9f3ff;border-radius:7px;min-height:32px;padding:4px 8px;font:650 12px system-ui;cursor:pointer}
+#live-stack-ranges{display:grid;gap:4px}
+.live-stack-row{display:grid;grid-template-columns:46px repeat(6,minmax(0,1fr));gap:3px;align-items:stretch}
+.live-stack-row>button{font-size:11px;letter-spacing:-.3px;white-space:nowrap}
+.live-stack-exact{display:grid;gap:0;text-align:center;font:700 10px system-ui;color:#d8e7f7}
+.live-stack-exact input{min-width:0;width:100%;height:28px;padding:1px;border:1px solid #607b97;border-radius:5px;background:#0b1b2d;color:#ffe1a5;text-align:center;font:700 16px system-ui;appearance:textfield;-moz-appearance:textfield}
+.live-stack-exact input::-webkit-inner-spin-button,.live-stack-exact input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.live-mode .quick-action-header{margin-bottom:5px}
+.live-mode .quick-reset-fold{min-height:32px;font-size:12px;padding:4px 8px}
+.live-mode .quick-mode-buttons{margin-bottom:5px;gap:4px}
+.live-mode .quick-mode-buttons button{min-height:38px;padding:5px;font-size:12px}
+.live-mode #quick-seats{margin-top:5px;gap:4px}
+.live-mode .quick-seat-inline{padding:4px}
+.live-mode .quick-seat-inline .quick-seat-choices button{min-height:38px}
+.live-mode .quick-seat-inline .quick-seat-numbers{margin-top:4px;gap:5px}
+.live-mode #live-test{padding:0;border:0;background:transparent;margin-top:8px}
+.live-mode #live-lock{min-height:44px}
+.live-mode .live-message:empty,.live-mode .live-storage-warning:empty{display:none}
+.live-mode .live-summary{margin-top:9px;padding-top:8px}
+.live-mode #live-new-hand{min-height:40px;margin:6px 0}
+.live-mode .live-note-label textarea{min-height:42px}
+.live-mode .quick-action-stack,.live-mode .quick-allin-numbers{display:none!important}
+.live-mode .quick-seat-inline .quick-seat-numbers{grid-template-columns:1fr}
+.live-mode .live-input-error:empty{display:none!important}
+.live-input-error{padding:7px;margin-top:5px;border:1px solid #bd8a40;border-radius:7px;color:#ffe1a3;font-size:13px}
