@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const RANKS='AKQJT98765432', FORMAT_KEY='LernPokerTournament_v2';
 const SUITS=[{symbol:'♠',name:'Pik'},{symbol:'♥',name:'Herz'},{symbol:'♦',name:'Karo'},{symbol:'♣',name:'Kreuz'}];
 let mode='before', activeCard=1, cardRanks=['A','K'], cardSuits=['♠','♠'], currentStatus='';
-const states=new Map();
+const states=new Map(),seatStacks=new Map();
 const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!==undefined)x.innerHTML=html;return x;};
 const decimal=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 const digits=v=>String(v||'').replace(/\D/g,'').slice(0,5);
@@ -22,6 +22,9 @@ function init(){
  const heroPos=$('heroPos');heroPos.closest('.group').hidden=true;
  const positionBox=el('section','quick-section','<h3>Meine Position</h3><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
  stackBox.after(positionBox);
+ const stackPanel=el('section','quick-section quick-all-stacks',
+   '<div class="quick-stack-header"><h3>Stacks der übrigen Spieler</h3><button type="button" id="quick-stack-reset">Alle = mein Stack</button></div><div id="quick-stack-grid" class="quick-stack-grid"></div>');
+ positionBox.after(stackPanel);
  mobilePick.hidden=true;
  const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1 · A♠</button><button id="card-two" type="button">Karte 2 · K♠</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert für ausgewählte Karte wählen"></div><div class="quick-suit-buttons" id="quick-suits" role="group" aria-label="Farbe für ausgewählte Karte wählen"></div>');
  mobilePick.before(cards);
@@ -31,7 +34,11 @@ function init(){
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
- const advanced=el('details','', '<summary>Weitere Angaben · Level, Tischgröße, ICM</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
+ const advanced=el('details','', '<summary>Weitere Angaben · Blindlevel und Tischgröße</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
+ const icmControl=$('useICM');
+ if(icmControl){icmControl.checked=false;icmControl.closest('.group').hidden=true;}
+ const icmNav=nav.querySelector('button[data-tab="icm"]');
+ if(icmNav)icmNav.remove();
  for(const id of ['profile','spot','heroChips','villainChips','villainPos','openBB','threebetBB','heroPos']){$(id).closest('.group').hidden=true;}
  advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Das Rechenmodell verwendet geschätzte Chip-EV-Strategien und ist keine vollständig gelöste GTO-Strategie. Mehrere aktive Gegner und komplexe Action-Trees werden noch nicht vollständig unterstützt. Nur zum Lernen und zur Nachanalyse außerhalb laufender Online-Partien.</p></details>'));
  const accent=document.querySelector('.panel.accent');
@@ -42,7 +49,7 @@ function init(){
  const seatId=(side,pos)=>side+':'+pos;
  const getState=(side,pos)=>{
   const id=seatId(side,pos);
-  if(!states.has(id))states.set(id,{action:'fold',bet:side==='after'?75:22,stack:Math.round(Math.max(2,heroBB()||20)*10),customStack:false});
+  if(!states.has(id))states.set(id,{action:'fold',bet:side==='after'?75:22,stack:Math.round(Math.max(.1,getStack(pos))*10),customStack:false});
   return states.get(id);
  };
  function showSetup(){welcome.hidden=false;document.body.style.overflow='hidden';welcome.querySelector('button').focus();}
@@ -50,10 +57,10 @@ function init(){
  function setProfile(key){
   if(!D.profiles[key])return;
   $('profile').value=key;$('level').value='1';setupProfile(false);
-  states.clear();mode='before';
+  states.clear();seatStacks.clear();mode='before';
   $('quick-bb').value=mask(D.profiles[key].startstack/ownBB());
   cardRanks=['A','K'];cardSuits=['♠','♠'];activeCard=1;updateCards();
-  renderPositions();renderSeatRows();syncScenario();
+  renderPositions();renderStacks();renderSeatRows();syncScenario();
   try{localStorage.setItem(FORMAT_KEY,key)}catch(_){}
   hideSetup();form.hidden=true;
  }
@@ -66,7 +73,7 @@ function init(){
    b.type='button';b.setAttribute('aria-pressed',String(heroPos.value===pos));b.classList.toggle('active',heroPos.value===pos);
    b.addEventListener('click',()=>{
     heroPos.value=pos;refreshVillain();
-    renderPositions();renderSeatRows();syncScenario();
+    renderPositions();renderStacks();renderSeatRows();syncScenario();
    });
    box.append(b);
   }
