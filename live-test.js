@@ -269,6 +269,7 @@ function init(){
   '<div id="live-prep"><p>Karten, Position, Stacks und Aktionen direkt oben eingeben. Danach eine Empfehlung ziehen und für die Hand fixieren.</p>'+ 
   '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
   '<div id="live-locked" hidden><div id="live-edit-status" class="live-edit-status"></div>'+
+  '<button type="button" id="live-new-hand" class="btn live-new-hand">Fixierte Hand abbrechen und neue eingeben</button>'+
   '<div id="live-locked-hand" class="live-locked-hand"></div>'+
   '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
 
@@ -297,6 +298,7 @@ function init(){
  $('live-lock').addEventListener('click',lock);
  $('live-save').addEventListener('click',()=>save('completed'));
  $('live-abort').addEventListener('click',()=>save('aborted'));
+ $('live-new-hand').addEventListener('click',()=>save('aborted'));
  $('live-actual').addEventListener('change',updateActual);
  $('live-copy').addEventListener('click',copyHistory);
  $('live-clear').addEventListener('click',clearHistory);
