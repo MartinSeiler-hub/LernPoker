@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const RANKS='AKQJT98765432', FORMAT_KEY='LernPokerTournament_v2';
 const SUITS=[{symbol:'♠',name:'Pik'},{symbol:'♥',name:'Herz'},{symbol:'♦',name:'Karo'},{symbol:'♣',name:'Kreuz'}];
-let mode='rfi', activeCard=1, cardRanks=['A','K'], cardSuits=['♠','♠'], editingSeat='', currentStatus='';
+let mode='before', activeCard=1, cardRanks=['A','K'], cardSuits=['♠','♠'], currentStatus='';
 const states=new Map();
 const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!==undefined)x.innerHTML=html;return x;};
 const decimal=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -25,7 +25,11 @@ function init(){
  mobilePick.hidden=true;
  const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1 · A♠</button><button id="card-two" type="button">Karte 2 · K♠</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert für ausgewählte Karte wählen"></div><div class="quick-suit-buttons" id="quick-suits" role="group" aria-label="Farbe für ausgewählte Karte wählen"></div>');
  mobilePick.before(cards);
- const action=el('section','quick-section','<h3>Aktionen in dieser Hand</h3><div class="quick-mode-buttons" role="group" aria-label="Situation"><button type="button" data-mode="rfi">Alle folden</button><button type="button" data-mode="before">Aktionen vor mir</button><button type="button" data-mode="after">Nach meinem Raise</button></div><div id="quick-action-instructions" class="quick-note"></div><div id="quick-own-raise" hidden><label for="quick-own-bet">Meine Eröffnung · Gesamtbetrag in BB</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div><div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
+ const action=el('section','quick-section',
+  '<div class="quick-action-header"><h3>Aktionen der Gegner</h3><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
+  '<div class="quick-mode-buttons" role="group" aria-label="Aktionsfolge"><button type="button" data-mode="before">Vor meiner Entscheidung</button><button type="button" data-mode="after">Nach meinem Raise</button></div>'+
+  '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
+  '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
  const advanced=el('details','', '<summary>Weitere Angaben · Level, Tischgröße, ICM</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
  for(const id of ['profile','spot','heroChips','villainChips','villainPos','openBB','threebetBB','heroPos']){$(id).closest('.group').hidden=true;}
@@ -46,7 +50,7 @@ function init(){
  function setProfile(key){
   if(!D.profiles[key])return;
   $('profile').value=key;$('level').value='1';setupProfile(false);
-  states.clear();mode='rfi';editingSeat='';
+  states.clear();mode='before';
   $('quick-bb').value=mask(D.profiles[key].startstack/ownBB());
   cardRanks=['A','K'];cardSuits=['♠','♠'];activeCard=1;updateCards();
   renderPositions();renderSeatRows();syncScenario();
@@ -147,59 +151,83 @@ function init(){
   return mode==='after'?seats().slice(i+1):seats().slice(0,i);
  }
  function markMode(){
-  action.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.mode===mode);b.setAttribute('aria-pressed',String(b.dataset.mode===mode))});
+  action.querySelectorAll('[data-mode]').forEach(b=>{
+   b.classList.toggle('active',b.dataset.mode===mode);
+   b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+  });
   $('quick-own-raise').hidden=mode!=='after';
-  $('quick-action-instructions').textContent=mode==='rfi'?'Alle Spieler vor dir folden; im Big Blind gewinnst du bei SB-Fold den Pot.':mode==='before'?'Tippe eine Position an und wähle Fold, Call/Limp, Raise oder All-in. Einsatz und Stack in BB als Ziffern (z. B. 225 = 22,5 BB).':'Du hast zuerst eröffnet. Gib deine Raisegröße ein und danach die Reaktion einer Position hinter dir.';
  }
  function renderSeatRows(){
   markMode();
   const box=$('quick-seats');box.innerHTML='';
-  if(mode==='rfi')return;
-  const side=modeSide();
-  for(const pos of applicableSeats()){
-   const id=seatId(side,pos),s=getState(side,pos);
-   const card=el('div','quick-seat','');card.dataset.seat=pos;
-   const head=el('button','quick-seat-head','');head.type='button';head.textContent=pos+' · '+({fold:'Fold',call:'Call / Limp',raise:side==='after'?'3-Bet':'Raise',allin:'All-in'}[s.action])+(s.action!=='fold'?' · '+decimal((s.action==='allin'?s.stack:s.bet)/10)+' BB':'')+' ▾';
-   head.setAttribute('aria-expanded',String(editingSeat===id));
-   head.addEventListener('click',()=>{editingSeat=editingSeat===id?'':id;renderSeatRows()});
-   card.append(head);
-   if(editingSeat===id){
-    const details=el('div','quick-seat-details','');
-    const choices=el('div','quick-seat-choices','');
-    for(const [kind,label] of [['fold','Fold'],['call','Call / Limp'],['raise',side==='after'?'3-Bet':'Raise'],['allin','All-in']]){
-     const b=el('button','',label);b.type='button';b.classList.toggle('active',s.action===kind);
-     b.addEventListener('click',()=>{
-      s.action=kind;
-      if(kind==='allin')s.bet=s.stack;
-      if(kind==='call'&&s.bet<10)s.bet=10;
-      if(kind==='raise'&&s.bet<(side==='after'?35:20))s.bet=side==='after'?75:22;
-      renderSeatRows();syncScenario();
-     });choices.append(b);
-    }
-    details.append(choices);
-    if(s.action!=='fold'){
-     const numberFields=el('div','quick-seat-numbers','');
-     if(s.action!=='allin'){
-      const betGroup=el('label','', 'Gesamt-Einsatz (BB)');const bet=el('input','');
-      bet.type='text';bet.inputMode='numeric';bet.pattern='[0-9]*';bet.maxLength=5;bet.value=String(s.bet);
-      const betValue=el('span','quick-digits-value',decimal(s.bet/10)+' BB');
-      bet.addEventListener('input',()=>{bet.value=digits(bet.value);s.bet=Number(bet.value);betValue.textContent=decimal(s.bet/10)+' BB';head.textContent=pos+' · '+(s.action==='raise'?(side==='after'?'3-Bet':'Raise'):'Call / Limp')+' · '+decimal(s.bet/10)+' BB ▾';syncScenario()});
-      betGroup.append(bet,betValue);numberFields.append(betGroup);
+  const side=modeSide(),positions=applicableSeats();
+  if(positions.length===0){
+   box.append(el('p','quick-seat-empty',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
+   return;
+  }
+  for(const pos of positions){
+   const s=getState(side,pos);
+   const card=el('div','quick-seat quick-seat-inline','');card.dataset.seat=pos;
+   const row=el('div','quick-seat-line','');
+   const position=el('strong','quick-seat-position',pos);
+   const choices=el('div','quick-seat-choices','');
+   for(const [kind,label] of [['fold','Fold'],['call','Call'],['raise',side==='after'?'3-Bet':'Raise'],['allin','All-in']]){
+    const b=el('button','',label);b.type='button';
+    b.classList.toggle('active',s.action===kind);
+    b.setAttribute('aria-pressed',String(s.action===kind));
+    b.setAttribute('aria-label',pos+': '+label);
+    b.addEventListener('click',()=>{
+     s.action=kind;
+     if(kind==='allin')s.bet=s.stack;
+     if(kind==='call'){
+      const previous=positions.slice(0,positions.indexOf(pos));
+      s.bet=previous.reduce((highest,p)=>{
+       const v=getState(side,p);
+       return v.action==='raise'||v.action==='allin'?Math.max(highest,v.action==='allin'?v.stack:v.bet):highest;
+      },10);
      }
-     const stackGroup=el('label','', 'Stack vor der Hand (BB)');const st=el('input','');
-     st.type='text';st.inputMode='numeric';st.pattern='[0-9]*';st.maxLength=5;st.value=String(s.stack);
-     const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
-     st.addEventListener('input',()=>{st.value=digits(st.value);s.stack=Number(st.value);s.customStack=true;if(s.action==='allin')s.bet=s.stack;stackValue.textContent=decimal(s.stack/10)+' BB';head.textContent=pos+' · '+(s.action==='allin'?'All-in':'Einsatz')+' · '+decimal((s.action==='allin'?s.stack:s.bet)/10)+' BB ▾';syncScenario()});
-     stackGroup.append(st,stackValue);numberFields.append(stackGroup);
-     if(s.action==='allin')numberFields.append(el('p','quick-note','All-in-Einsatz = Spielerstack.'));
-     details.append(numberFields);
+     if(kind==='raise'&&s.bet<(side==='after'?35:20))s.bet=side==='after'?75:22;
+     renderSeatRows();syncScenario();
+    });
+    choices.append(b);
+   }
+   row.append(position,choices);card.append(row);
+   if(s.action!=='fold'){
+    const fields=el('div','quick-seat-numbers','');
+    if(s.action!=='allin'){
+     const betGroup=el('label','','Gesamteinsatz (BB)');
+     const bet=el('input','');bet.type='text';bet.inputMode='numeric';bet.pattern='[0-9]*';bet.maxLength=5;
+     bet.value=String(s.bet);bet.setAttribute('aria-label',pos+' Gesamteinsatz in Zehntel-BB');
+     const betValue=el('span','quick-digits-value',decimal(s.bet/10)+' BB');
+     bet.addEventListener('input',()=>{
+      bet.value=digits(bet.value);s.bet=Number(bet.value);
+      betValue.textContent=decimal(s.bet/10)+' BB';syncScenario();
+     });
+     betGroup.append(bet,betValue);fields.append(betGroup);
     }
-    card.append(details);
+    const stackGroup=el('label','','Stack (BB)');
+    const stack=el('input','');stack.type='text';stack.inputMode='numeric';stack.pattern='[0-9]*';stack.maxLength=5;stack.value=String(s.stack);
+    stack.setAttribute('aria-label',pos+' Stack in Zehntel-BB');
+    const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
+    stack.addEventListener('input',()=>{
+     stack.value=digits(stack.value);s.stack=Number(stack.value);s.customStack=true;
+     if(s.action==='allin')s.bet=s.stack;
+     stackValue.textContent=decimal(s.stack/10)+' BB';syncScenario();
+    });
+    stackGroup.append(stack,stackValue);fields.append(stackGroup);
+    card.append(fields);
    }
    box.append(card);
   }
  }
- action.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;editingSeat='';renderSeatRows();syncScenario()}));
+ action.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+  mode=b.dataset.mode;renderSeatRows();syncScenario();
+ }));
+ $('quick-all-fold').addEventListener('click',()=>{
+  mode='before';
+  for(const seat of seats())for(const side of ['before','after'])getState(side,seat).action='fold';
+  renderSeatRows();syncScenario();
+ });
  $('quick-own-bet').addEventListener('input',()=>{
   $('quick-own-bet').value=digits($('quick-own-bet').value);
   $('quick-own-value').textContent=decimal(tenth($('quick-own-bet').value)||0)+' BB';
@@ -218,12 +246,12 @@ function init(){
    blocked('Bitte gültigen Stack eingeben.');return;
   }
   $('heroChips').value=String(Math.max(1,Math.round(stack*lvl)));
-  const before=mode!=='after',side=modeSide(),involved=mode==='rfi'?[]:applicableSeats().map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
+  const before=mode==='before',side=modeSide(),involved=applicableSeats().map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
   let next='RFI',vPos='',vBet=22,vStack=stack,ownRaise=tenth($('quick-own-bet').value)||2.2,problem='';
   if(stack<2)problem='Unter 2 BB ist das vorhandene Preflop-Modell nicht anwendbar.';
-  if(mode==='rfi'&&hero==='BB')problem='Alle Spieler einschließlich Small Blind folden: Als Big Blind gewinnst du den Pot ohne Entscheidung.';
-  if(mode!=='rfi'){
-    if(!applicableSeats().length)problem='Vor bzw. hinter dieser Position gibt es keine entsprechenden Akteure.';
+  if(mode==='before'&&hero==='BB'&&involved.length===0)problem='Alle folden zum Big Blind – kein weiterer Zug erforderlich.';
+  if(mode==='before'||mode==='after'){
+    if(!applicableSeats().length&&mode==='after')problem='Nach dir sitzt niemand mehr.';
     if(involved.some(s=>s.stack<1||s.stack>10000||s.bet<=0||s.bet>s.stack))problem='Mindestens ein Spieler hat einen ungültigen Stack oder Einsatz (Einsatz darf Stack nicht überschreiten).';
     if(involved.length>1)problem='Für mehrere aktive Gegner ist hier noch keine Empfehlung verfügbar.';
     if(involved.length===1){
@@ -252,7 +280,7 @@ function init(){
   if(!problem)render();
   else {render();blocked(problem);}
   if(!problem)blocked('');
-  if(mode==='rfi')summary.textContent='Alle folden · '+hero+' · '+decimal(stack)+' BB eigener Stack.';
+  if(mode==='before'&&involved.length===0)summary.textContent='Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
   else summary.textContent=involved.length?involved.map(v=>v.pos+': '+({call:'Call/Limp',raise:mode==='after'?'3-Bet':'Raise',allin:'All-in'}[v.action])+' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):'Alle gewählten Positionen folden.';
   // Die Meldung erscheint nur am Ergebnisfeld; nicht doppelt in der Aktionsübersicht.
  }
