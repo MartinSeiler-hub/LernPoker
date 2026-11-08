@@ -471,15 +471,18 @@ function refreshVillain(){
 }
 function render(){
  try{
-  const input=selectedInputs(),p=D.profiles[input.profile],lvl=p.levels.find(l=>l.level===input.level),c=M.getContext(D,input);
-  const actualBB=c.stackBB,fullAnte=input.players*c.anteBB,prePot=1.5+fullAnte;
+  const input=selectedInputs(),p=D.profiles[input.profile],lvl=p.levels.find(l=>l.level===input.level);
+  const usingMulti=Boolean(window.LernPokerScenario&&window.LernPokerMultiway);
+  const res=usingMulti?window.LernPokerMultiway.computeMatrix(D,input,window.LernPokerScenario):M.computeMatrix(D,input);
+  const c=res.context;
+  const actualBB=usingMulti?c.heroStackBB:c.stackBB,fullAnte=input.players*c.anteBB,prePot=usingMulti?c.potBB:1.5+fullAnte;
   if(actualBB<2){
     by('kpis').innerHTML=[['Blinds',`${fmt(lvl.sb,0)} / ${fmt(lvl.bb,0)}`],['Effektiver Stack',`${fmt(actualBB,2)} BB`],['Ante gesamt',`${fmt(fullAnte,2)} BB`],['Pot vor Aktion',`${fmt(prePot,2)} BB`],['Zeitintervall',`${p.interval_minutes} Min.`]].map(x=>`<div class="kpi"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
     by('model-warning').innerHTML='<b>Stack unter 2 BB:</b> der Stack kann bereits durch Blind und Ante ganz oder nahezu ganz gebunden sein. Kein reguläres Raise-/Call-Chart berechnet.';
     by('matrix').innerHTML='';by('stats').innerHTML='';by('hand-kv').innerHTML='';by('hand-ev').innerHTML='';current=null;renderBlinds(p,input.level,input.players);return;
   }
-  const res=M.computeMatrix(D,input);let icmAdj=null;
-  if(input.spot==='JAM'&&by('useICM').checked){
+  let icmAdj=null;
+  if(!usingMulti&&input.spot==='JAM'&&by('useICM').checked){
     const stacks=parseNumbers(by('icmStacks').value),payouts=parseNumbers(by('icmPayouts').value);
     if(stacks.length!==input.players)throw Error('ICM-Modus: Die Anzahl der Stack-Einträge muss der Zahl ALLER verbleibenden Spieler entsprechen. Tischgröße auf Finaltisch umstellen oder ICM-Stacks anpassen.');
     icmAdj=M.icmCallDecision({stacks,payouts,heroIndex:+by('icmHero').value-1,villainIndex:+by('icmVillain').value-1,sb:lvl.sb,bb:lvl.bb,ante:lvl.ante});
@@ -493,11 +496,12 @@ function render(){
     for(const k of Object.keys(res.frequencies))res.frequencies[k]=100*res.comboCounts[k]/1326;
   }
   current=res;current.icmAdj=icmAdj;
-  by('kpis').innerHTML=[['Blinds',`${fmt(lvl.sb,0)} / ${fmt(lvl.bb,0)}`],['Effektiver Stack',`${fmt(actualBB,1)} BB`],['Ante gesamt',`${fmt(fullAnte,2)} BB`],['Pot vor Aktion',`${fmt(prePot,2)} BB`],['Zeitintervall',`${p.interval_minutes} Min.`]].map(x=>`<div class="kpi"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
+  by('kpis').innerHTML=[['Blinds',`${fmt(lvl.sb,0)} / ${fmt(lvl.bb,0)}`],[usingMulti?'Eigener Stack':'Effektiver Stack',`${fmt(actualBB,1)} BB`],['Ante gesamt',`${fmt(fullAnte,2)} BB`],['Pot vor Aktion',`${fmt(prePot,2)} BB`],['Zeitintervall',`${p.interval_minutes} Min.`]].map(x=>`<div class="kpi"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
   let warnings=p.levels.length<15?'<b>Blindlevels > '+p.levels.length+' unbekannt.</b> Keine künstliche Fortschreibung. ':'<b>Blindlevel 1–37 aus Screenshots erfasst.</b> ';
   warnings+=(icmAdj?'<b>ICM-Call-Modus aktiv:</b> Für Calls gegen All-in sind die eingegebenen Stacks und Auszahlungen berücksichtigt. Andere Aktionen bleiben Chip-EV-Modell. ':'Turnier-ICM ist nicht automatisch in die Preflop-Charts eingerechnet. ')+'Gegnerwahrscheinlichkeiten sind angenommene Parameter, keine beobachteten Daten.';
   by('model-warning').innerHTML=warnings;
-  by('chart-description').textContent=`${input.players}-Max · ${input.spot==='RFI'?'unopened':input.spot==='OPEN'?'vs. Open-Raise':input.spot==='3BET'?'vs. 3-Bet':'vs. All-in'} · ${input.position}${input.spot==='RFI'?'':' gegen '+input.opener} · ${fmt(actualBB,1)} BB effektiv. Klicke eine Hand für Equity und Aktions-EV.`;
+  by('chart-description').textContent=usingMulti?`${input.players}-Max · ${c.spotLabel} · ${input.position} · ${c.opponents} aktive Gegner · Pot ${fmt(c.potBB,2)} BB. Werte sind Chip-EV-Modellschätzungen.`:
+     `${input.players}-Max · ${input.spot==='RFI'?'unopened':input.spot==='OPEN'?'vs. Open-Raise':input.spot==='3BET'?'vs. 3-Bet':'vs. All-in'} · ${input.position}${input.spot==='RFI'?'':' gegen '+input.opener} · ${fmt(actualBB,1)} BB effektiv. Klicke eine Hand für Equity und Aktions-EV.`;
   by('legend').innerHTML=Object.entries(M.PALETTE).map(([k,color])=>`<span><i class="dot" style="background:${color}"></i>${k==='JAM'?'ALL-IN':k==='RAISE'?'OPEN-RAISE':k==='LIMP'?'LIMP':k}</span>`).join('');
   const chart=by('matrix');chart.innerHTML='';
   for(let i=0;i<13;i++)for(let j=0;j<13;j++){
@@ -525,11 +529,11 @@ function renderBlinds(p,lvl,players){
  by('blindtable').querySelector('tbody').innerHTML=p.levels.map(l=>`<tr class="${l.level===lvl?'active':''}"><td>${l.level}</td><td>${fmt(l.sb,0)} / ${fmt(l.bb,0)}</td><td>${fmt(l.ante,0)}</td><td>${fmt(players*l.ante/l.bb,2)}</td><td>${fmt(p.startstack/l.bb,1)}</td><td>+ ${fmt((l.level-1)*p.interval_minutes,0)} Min.</td></tr>`).join('');
 }
 function chartCSV(){
- let lines=['Hand;Position;Situation;Gegnerposition;Stack_BB;Aktion;ChipEV_BB_Modell;Gegner_Range_Pct;Showdown_Equity_Pct;Kombinationen;Fold_EV_BB;Call_EV_BB;Raise_EV_BB;3bet_EV_BB;4bet_EV_BB;Jam_EV_BB;Limp_EV_BB;ICM_EV_EUR;ICM_MindestEquity'];
+ let lines=['Hand;Position;Situation;Gegnerposition;Stack_BB;Aktion;ChipEV_BB_Modell;Gegner_Range_Pct;Showdown_Equity_Pct;Kombinationen;Fold_EV_BB;Check_EV_BB;Call_EV_BB;Raise_EV_BB;3bet_EV_BB;4bet_EV_BB;Jam_EV_BB;Limp_EV_BB;ICM_EV_EUR;ICM_MindestEquity'];
  const s=current.context,fmtcsv=v=>v===undefined||v===null||v< -99999?'':String(Math.round(v*10000)/10000).replace('.',',');
  for(const key of current.handOrder){
   const h=current.hands[key],a=h.alternatives;
-  lines.push([key,s.position,current.spot,s.opener,fmtcsv(s.stackBB),h.action,fmtcsv(h.ev),fmtcsv(100*h.referencePct),fmtcsv(100*h.showdownEq),h.weight,...['FOLD','CALL','RAISE','3BET','4BET','JAM','LIMP'].map(t=>fmtcsv(a[t])),fmtcsv(h.icmEV),fmtcsv(h.icmRequired*100)].join(';'));
+  lines.push([key,s.position,current.spot,s.opener,fmtcsv(s.stackBB),h.action,fmtcsv(h.ev),fmtcsv(100*h.referencePct),fmtcsv(100*h.showdownEq),h.weight,...['FOLD','CHECK','CALL','RAISE','3BET','4BET','JAM','LIMP'].map(t=>fmtcsv(a[t])),fmtcsv(h.icmEV),fmtcsv(h.icmRequired*100)].join(';'));
  }
  return lines.join('\n');
 }
@@ -639,5 +643,6 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
 })();
 </script>
 
+<script src="./multiway-engine.js"></script>
 <script src="./quick-ui.js"></script>
 </body></html>
