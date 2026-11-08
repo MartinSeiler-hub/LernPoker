@@ -102,3 +102,16 @@ Der zusätzliche Reiter **LiveTest** ist für einen Pokerabend **ohne Geld** und
 **Wichtige Grenzen:** Die 6-Max-Mischfrequenzen sind derzeit ein heuristischer EV-Trainingsmix und **keine durch einen Solver bestätigten GTO-Frequenzen**. Live-Ergebnisse weniger Hände können weder GTO-Nähe noch eine überlegene Strategie beweisen; Gegner, Positionen und Blattverteilungen ändern sich ständig. Eine aussagefähige Untersuchung benötigt viele Hände, ein konsistentes Protokoll und einen unabhängigen Solver-Benchmark. Das Programm setzt keine Aktionen selbst am Tisch um.
 
 Die Touch-Eingabe und die bereits geladenen Rechenfunktionen sind nach Installation der PWA offline verwendbar. Für die Persistenz von Verlauf und fixierter Empfehlung muss der Browser lokale Speicherung zulassen.
+
+
+## LiveTest V11: 6-Max oder 8-Max – nur die gezogene Aktion sichtbar
+
+LiveTest unterstützt jetzt **6-Max und 8-Max**. Die zwei sichtbaren Buttons wählen das Spielerformat: 6-Max setzt das bekannte Profil B, 8-Max das bekannte Profil A. Die Profile können im normalen Lernmodus weiter über die vorhandene Profilauswahl geändert werden.
+
+**Keine doppelte Eingabe:** Der normale Schnell-Eingabebereich wird bei Auswahl von LiveTest direkt **in die LiveTest-Ansicht verschoben**. Dort sind dieselben Kartenbuttons, vier Farben, Positionsbuttons, Stackwerte aller übrigen Spieler, Blindlevel und gegnerischen Aktionsbuttons wie auf der Empfehlungsseite bedienbar. Beim Zurückwechseln wird derselbe Eingabebereich an seine ursprüngliche Stelle verschoben; die Werte bleiben erhalten.
+
+**Strategie für die Mitspieler verdeckt:** Mit „Empfehlung einmal ziehen und fixieren“ wird genau eine der gemäß aktuellem **Modellmix gewichteten** Optionen gezogen. Während der Hand stehen in LiveTest nur die gewählte Aktion und – bei Raise/3-Bet/4-Bet/All-in – die konkrete Gesamt-Raisehöhe in BB. **Bluff-Label, Alternativen, Modellwahrscheinlichkeiten und die Zufallszahl werden nicht angezeigt.** Nach dem Ziehen ist die Eingabe gesperrt; bei erneutem Öffnen bleibt dieselbe Empfehlung erhalten. Die komplette Wahrscheinlichkeitsverteilung bleibt ausschließlich im lokalen Testprotokoll gespeichert; beim CSV-Export können Gewichte für die eigene Auswertung erscheinen.
+
+**Genauigkeit:** Auch für 8-Max ist dies zunächst eine EV-gewichtete **heuristische Modellmischung**, keine durch Preflop-Solver nachgewiesene Gleichgewichtsstrategie. Die Modellgewichtung verwendet die tatsächliche Tischgröße und die 8-Max-Antes, ist aber noch nicht gegen einen unabhängigen Solver kalibriert. Die Testpartie bleibt privat, abgesprochen und ohne Geldeinsatz. Das Tool greift weder auf eine Online-Pokerplattform zu noch setzt es automatisch Aktionen.
+
+Bei einem laufenden fixierten LiveTest kann das Tischformat erst wieder nach Handabschluss oder protokolliertem Abbruch geändert werden. Die offlinefähige PWA lädt dafür Cache v12.
