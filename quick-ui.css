@@ -178,3 +178,23 @@
  #quick-rec-hand,#quick-rec-action{font-size:18px}
  .quick-sizing-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* V7: optionale Diktierfunktion und drei nicht fixierte Navigationsreiter */
+.nav-mobile{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.voice-training{margin-top:3px;border-top:0;padding:3px 0 10px}
+.voice-trigger{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#voice-start{background:#203f57;color:#fcf3d8;border:1px solid #ad945f;border-radius:10px;
+ min-height:43px;padding:9px 14px;font:700 14px system-ui;cursor:pointer}
+#voice-state{font-size:12px;line-height:1.35;color:#bdd4e8;flex:1}
+#voice-review{margin-top:10px;padding:10px;background:#132a40;border:1px solid #526a86;border-radius:10px}
+#voice-review[hidden]{display:none!important}
+#voice-review label{font-size:13px;font-weight:700;color:#f2d7a5}
+#voice-text{width:100%;min-height:80px;color:#f3f8ff;border:1px solid #526c88;border-radius:9px;
+ background:#0f1d2f;font:14px system-ui;padding:10px;margin:7px 0}
+#voice-preview{font-size:12px;color:#c7dcf3;margin:6px 0 10px}
+.voice-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.voice-buttons button{background:#24445e;color:#edf7ff;border:1px solid #6b849d;
+ border-radius:9px;min-height:40px;padding:7px 13px;font:650 13px system-ui;cursor:pointer}
+#voice-accept{background:#9b6c2a;color:#fff;border-color:#d9aa65}
+#voice-start:focus-visible,.voice-buttons button:focus-visible{outline:3px solid #ffdc88;outline-offset:2px}
