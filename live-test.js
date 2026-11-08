@@ -211,6 +211,8 @@ function render(){
  $('live-test').hidden=!live;
  const unlocked=$('live-prep'),locked=$('live-locked');
  unlocked.hidden=!!active;locked.hidden=!active;
+ const review=$('live-summary');
+ if(review){review.hidden=!!active;if(active)review.open=false;}
  for(const b of document.querySelectorAll('[data-live-max]')){
   const count=Number(active?.players??$('players')?.value);
   b.classList.toggle('active',Number(b.dataset.liveMax)===count);
@@ -273,11 +275,11 @@ function init(){
   '<button type="button" id="live-abort" class="btn">Hand abbrechen (protokollieren)</button></div></div>'+
   '<p id="live-message" role="status" class="live-message"></p>'+
   '<p id="live-storage-warning" class="live-storage-warning"></p>'+
-  '<div class="live-summary"><h3>Testprotokoll</h3><p id="live-stats"></p>'+
+  '<details class="live-summary" id="live-summary"><summary>Testprotokoll &amp; Auswertung</summary><p id="live-stats"></p>'+ 
   '<div class="live-history-actions"><button type="button" id="live-copy" class="btn">CSV kopieren</button>'+
   '<button type="button" id="live-clear" class="btn">Verlauf löschen</button></div>'+
   '<textarea id="live-export-text" hidden readonly></textarea>'+
-  '<div id="live-history-list" class="live-history-list"></div></div>';
+  '<div id="live-history-list" class="live-history-list"></div></details>';
  picker.after(panel);
  for(const b of panel.querySelectorAll('[data-live-max]')){
   b.addEventListener('click',()=>chooseTable(Number(b.dataset.liveMax)));
