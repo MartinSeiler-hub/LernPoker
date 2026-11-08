@@ -9,7 +9,7 @@ const ACTIONS={FOLD:'Fold',CHECK:'Check',CALL:'Call',LIMP:'Limp',RAISE:'Raise','
 const numeric=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 const isRaise=a=>['RAISE','3BET','4BET','JAM'].includes(a);
 const plain=s=>String(s??'').replace(/\s+/g,' ').trim();
-let data={active:null,history:[]}, tab='trainer';
+let data={active:null,history:[]}, tab='trainer',pickerHome=null;
 const prevDisabled=new WeakMap();
 function persist(){
  try{global.localStorage.setItem(KEY,JSON.stringify(data));$('live-storage-warning').textContent='';return true;}
@@ -24,7 +24,7 @@ function load(){
 function showAction(x){
  if(!x)return '–';
  let s=ACTIONS[x.action]||x.action;
- if(x.action==='JAM')return s;
+ if(x.action==='JAM')return Number.isFinite(x.toBB)?s+' auf '+numeric(x.toBB)+' BB':s;
  if(isRaise(x.action)&&Number.isFinite(x.toBB))return s+' auf '+numeric(x.toBB)+' BB';
  if(x.action==='CALL'&&Number.isFinite(x.toBB))return s+' · '+numeric(x.toBB)+' BB';
  return s;
@@ -73,12 +73,15 @@ function lock(){
  persist();render();$('live-message').textContent='Empfehlung für diese Hand fixiert. Erst nach der Hand dokumentieren.';
 }
 function freezeInputs(){
- const freeze=tab==='live'&&!!data.active;
- const picker=$('quick-picker');
+ const freeze=!!data.active;
+ const picker=$('quick-picker'),slot=$('live-input-slot');
  if(!picker)return;
+ // Move the original fast input controls into LiveTest: same fields, same state,
+ // no duplicate IDs, no tab switch required for cards/positions/stacks/actions.
+ if(tab==='live'&&slot&&picker.parentNode!==slot)slot.appendChild(picker);
+ else if(tab!=='live'&&pickerHome?.parentNode&&picker.previousSibling!==pickerHome)pickerHome.after(picker);
  picker.classList.toggle('live-inputs-frozen',freeze);
- // A resumed locked hand must not display newly initialized or edited training inputs.
- picker.hidden=freeze || !['trainer','matrix','live'].includes(tab);
+ picker.hidden=tab==='live'?freeze:!['trainer','matrix'].includes(tab);
  const controlList=[...picker.querySelectorAll('button,input,select,textarea'),$('change-tournament')].filter(Boolean);
  for(const input of controlList){
   if(freeze){
@@ -88,6 +91,23 @@ function freezeInputs(){
    input.disabled=prevDisabled.get(input);prevDisabled.delete(input);
   }
  }
+}
+function chooseTable(players){
+ if(data.active){$('live-message').textContent='Die laufende Hand ist fixiert. Format erst nach dem Abschluss ändern.';return;}
+ const profile=players===6?'B':'A';
+ const selector=$('profile');
+ if(!selector)return;
+ if(selector.value!==profile){
+  selector.value=profile;
+  selector.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ const count=$('players');
+ if(count&&[...count.options].some(x=>Number(x.value)===players)&&Number(count.value)!==players){
+  count.value=String(players);
+  count.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ $('live-message').textContent=players+' Spieler ausgewählt.';
+ render();
 }
 function clearEntry(){
  $('live-actual').value='recommended';
@@ -191,6 +211,12 @@ function render(){
  $('live-test').hidden=!live;
  const unlocked=$('live-prep'),locked=$('live-locked');
  unlocked.hidden=!!active;locked.hidden=!active;
+ for(const b of document.querySelectorAll('[data-live-max]')){
+  const count=Number(active?.players??$('players')?.value);
+  b.classList.toggle('active',Number(b.dataset.liveMax)===count);
+  b.setAttribute('aria-pressed',String(Number(b.dataset.liveMax)===count));
+  b.disabled=!!active;
+ }
  if(active){
   $('live-sticky-hand').textContent=active.physicalCards+' · '+active.heroPosition;
   $('live-sticky-action').textContent=showAction(active.picked);
@@ -217,6 +243,8 @@ function render(){
 function init(){
  const nav=document.querySelector('.nav-mobile'),picker=$('quick-picker');
  if(!nav||!picker)return;
+ pickerHome=document.createComment('original quick-picker position');
+ picker.before(pickerHome);
  const sticky=document.createElement('div');sticky.id='live-sticky';sticky.hidden=true;
  sticky.innerHTML='<div class="live-sticky-row"><span id="live-sticky-hand">LiveTest</span>'+
   '<strong id="live-sticky-action">Hand vorbereiten</strong></div>'+
@@ -227,7 +255,7 @@ function init(){
   '<div class="live-format"><span>Spieler am Tisch</span><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+ 
   '<div id="live-input-slot"></div>'+ 
   '<div class="live-caption">Privater Test mit Zustimmung aller Beteiligten · ohne Geld · Ergebnisse nur auf diesem Gerät</div>'+
-  '<div id="live-prep"><p>Oben Hand, Position, Stacks und Gegneraktionen einstellen. Anschließend die Empfehlung für genau diese Hand fixieren.</p>'+
+  '<div id="live-prep"><p>Karten, Position, Stacks und Aktionen direkt oben eingeben. Danach eine Empfehlung ziehen und für die Hand fixieren.</p>'+ 
   '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
   '<div id="live-locked" hidden><div id="live-locked-hand" class="live-locked-hand"></div>'+
   '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
@@ -251,6 +279,9 @@ function init(){
   '<textarea id="live-export-text" hidden readonly></textarea>'+
   '<div id="live-history-list" class="live-history-list"></div></div>';
  picker.after(panel);
+ for(const b of panel.querySelectorAll('[data-live-max]')){
+  b.addEventListener('click',()=>chooseTable(Number(b.dataset.liveMax)));
+ }
  $('live-lock').addEventListener('click',lock);
  $('live-save').addEventListener('click',()=>save('completed'));
  $('live-abort').addEventListener('click',()=>save('aborted'));
