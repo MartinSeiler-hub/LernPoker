@@ -55,6 +55,8 @@ function parse(text){
  for(const [pos,rx] of posRx){
   const flags=rx.flags.includes('g')?rx.flags:rx.flags+'g';const gRx=new RegExp(rx.source,flags);
   for(const match of s.matchAll(gRx)){
+   // "20 BB" describes a stack, not the Big Blind seat.
+   if(pos==='BB' && /\d+(?:\.\d+)?\s*$/.test(s.slice(0,match.index)))continue;
    tokens.push({pos,start:match.index,end:match.index+match[0].length,word:match[0]});
   }
  }
