@@ -63,7 +63,10 @@ function calculate(data,inputs,training,hand,baseHand){
  const raiseLabel=ctx.stage==='after'?'4BET':ctx.top>1.01?'3BET':'RAISE';
  const supported=Object.hasOwn(alt,raiseLabel)&&Number(alt[raiseLabel])>-1e5;
  const capByStage=ctx.stage==='after'?bluff&&WHEEL.has(hand):bluff;
- const canRaise=isUnopened?openAllowed:(supported||capByStage);
+ // At very short stacks, a non-all-in re-raise usually leaves a misleading
+ // tiny remainder. Restrict 6-max response to jams/calls/folds below 13 BB.
+ const shortReRaise=ctx.heroStack<13 && ctx.top>1.01;
+ const canRaise=!shortReRaise && (isUnopened?openAllowed:(supported||capByStage));
  let sizes={options:[]};
  if(canRaise){
   sizes=Size.analyze(data,inputs,{...training,heroStackBB:ctx.heroStack,scenario},hand);
