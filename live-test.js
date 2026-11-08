@@ -78,6 +78,8 @@ function freezeInputs(){
  const picker=$('quick-picker');
  if(!picker)return;
  picker.classList.toggle('live-inputs-frozen',freeze);
+ // A resumed locked hand must not display newly initialized or edited training inputs.
+ picker.hidden=freeze || !['trainer','matrix','live'].includes(tab);
  const controlList=[...picker.querySelectorAll('button,input,select,textarea'),$('change-tournament')].filter(Boolean);
  for(const input of controlList){
   if(freeze){
@@ -199,6 +201,13 @@ function render(){
   $('live-locked-hand').textContent='Hand '+active.physicalCards+' · '+active.heroPosition+
     ' · '+numeric(active.stackBB)+' BB';
   $('live-locked-action').textContent=showAction(active.picked);
+  const actors=active.training?.scenario?.actions||[];
+  const actorText=actors.length?actors.map(a=>
+   a.position+' '+(ACTIONS[a.action]||a.action)+
+   (a.action!=='fold'?' '+numeric(a.betBB??a.stackBB)+' BB':'')+
+   (Number.isFinite(a.stackBB)?' (Stack '+numeric(a.stackBB)+' BB)':'')).join(' · '):
+   'Alle vorherigen Positionen folden';
+  $('live-locked-situation').textContent=actorText;
   const mix=$('live-locked-mix');mix.replaceChildren();
   for(const entry of active.mix){
    const pill=document.createElement('span');pill.className='live-mix-pill';
@@ -227,7 +236,7 @@ function init(){
   '<div id="live-prep"><p>Oben Hand, Position, Stacks und Gegneraktionen einstellen. Anschließend die Empfehlung für genau diese Hand fixieren.</p>'+
   '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
   '<div id="live-locked" hidden><div id="live-locked-hand" class="live-locked-hand"></div>'+
-  '<div id="live-locked-action" class="live-locked-action"></div>'+
+  '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
   '<div id="live-locked-mix" class="live-mix-list"></div>'+
   '<div class="live-actual-fields"><label>Tatsächlich gespielt<select id="live-actual">'+
   '<option value="recommended">Genau wie empfohlen</option><option value="FOLD">Fold</option><option value="CHECK">Check</option>'+
