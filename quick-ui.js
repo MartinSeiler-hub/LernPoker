@@ -37,7 +37,7 @@ function init(){
  const seatId=(side,pos)=>side+':'+pos;
  const getState=(side,pos)=>{
   const id=seatId(side,pos);
-  if(!states.has(id))states.set(id,{action:'fold',bet:22,stack:Math.round(Math.max(2,heroBB()||20)*10),customStack:false});
+  if(!states.has(id))states.set(id,{action:'fold',bet:side==='after'?75:22,stack:Math.round(Math.max(2,heroBB()||20)*10),customStack:false});
   return states.get(id);
  };
  function showSetup(){welcome.hidden=false;document.body.style.overflow='hidden';welcome.querySelector('button').focus();}
@@ -143,7 +143,7 @@ function init(){
       s.action=kind;
       if(kind==='allin')s.bet=s.stack;
       if(kind==='call'&&s.bet<10)s.bet=10;
-      if(kind==='raise'&&s.bet<20)s.bet=22;
+      if(kind==='raise'&&s.bet<(side==='after'?35:20))s.bet=side==='after'?75:22;
       renderSeatRows();syncScenario();
      });choices.append(b);
     }
@@ -199,6 +199,7 @@ function init(){
     if(involved.length>1)problem='Mehrere Spieler sind eingestiegen. Dieses Modell unterstützt keine Multiway-Pots, Sidepots oder mehrfachen Raises. Deshalb keine verlässliche Handlungsempfehlung.';
     if(involved.length===1){
       const v=involved[0];vPos=v.pos;vBet=v.action==='allin'?v.stack/10:v.bet/10;vStack=v.stack/10;
+      if(Math.min(stack,vStack)<2)problem='Effektiver Stack unter 2 BB: die vorhandene Engine kann diesen Fall nicht zuverlässig abbilden.';
       if(before){
         if(v.action==='raise'){next='OPEN';if(vBet<1.5)problem='Ein Raise muss mindestens auf 1,5 BB gehen.';}
         else if(v.action==='allin'){next='JAM';}
