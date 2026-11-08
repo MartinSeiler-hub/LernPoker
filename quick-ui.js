@@ -239,50 +239,67 @@ function init(){
   const quiz=nav.querySelector('[data-tab="quiz"]');if(quiz)quiz.disabled=Boolean(message);
  }
  function syncScenario(){
-  const hero=heroPos.value, stack=heroBB();
+  const hero=heroPos.value,stack=heroBB();
   const summary=$('quick-case-status'),lvl=ownBB();
   if(!Number.isFinite(stack)||stack<=0||stack>1000){
-   summary.textContent='Ungültiger eigener Stack: 1 bis 10.000 als Ziffern eingeben (letzte Ziffer ist Zehntel-BB).';
-   blocked('Bitte gültigen Stack eingeben.');return;
+   window.LernPokerScenario=null;summary.textContent='Stack prüfen.';
+   blocked('Ungültiger eigener Stack.');return;
   }
   $('heroChips').value=String(Math.max(1,Math.round(stack*lvl)));
-  const before=mode==='before',side=modeSide(),involved=applicableSeats().map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
-  let next='RFI',vPos='',vBet=22,vStack=stack,ownRaise=tenth($('quick-own-bet').value)||2.2,problem='';
-  if(stack<2)problem='Unter 2 BB ist das vorhandene Preflop-Modell nicht anwendbar.';
-  if(mode==='before'&&hero==='BB'&&involved.length===0)problem='Alle folden zum Big Blind – kein weiterer Zug erforderlich.';
-  if(mode==='before'||mode==='after'){
-    if(!applicableSeats().length&&mode==='after')problem='Nach dir sitzt niemand mehr.';
-    if(involved.some(s=>s.stack<1||s.stack>10000||s.bet<=0||s.bet>s.stack))problem='Mindestens ein Spieler hat einen ungültigen Stack oder Einsatz (Einsatz darf Stack nicht überschreiten).';
-    if(involved.length>1)problem='Für mehrere aktive Gegner ist hier noch keine Empfehlung verfügbar.';
-    if(involved.length===1){
-      const v=involved[0];vPos=v.pos;vBet=v.action==='allin'?v.stack/10:v.bet/10;vStack=v.stack/10;
-      if(Math.min(stack,vStack)<2)problem='Effektiver Stack unter 2 BB: die vorhandene Engine kann diesen Fall nicht zuverlässig abbilden.';
-      if(before){
-        if(v.action==='raise'){next='OPEN';if(vBet<1.5)problem='Ein Raise muss mindestens auf 1,5 BB gehen.';}
-        else if(v.action==='allin'){next='JAM';}
-        else problem='Für Limp-/Call-Pots ist noch keine Empfehlung verfügbar.';
-      }else{
-        if(v.action==='raise'){next='3BET';if(vBet<=ownRaise||vBet<3.5)problem='Die 3-Bet muss höher als deine Eröffnung sein und mindestens 3,5 BB betragen (Modellgrenze).';}
-        else problem='Für diese Folgeaktion ist noch keine Empfehlung verfügbar.';
-      }
-    }else if(involved.length===0){
-      if(mode==='after')problem='Nach deinem Raise folden alle: Es besteht keine weitere Preflop-Entscheidung.';
-      else next='RFI';
-    }
+  const before=mode==='before',side=modeSide();
+  const positions=applicableSeats();
+  const involved=positions.map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
+  const ownRaise=tenth($('quick-own-bet').value)||2.2;
+  const prior=involved.filter(s=>s.action==='raise'||s.action==='allin');
+  let problem='',next='RFI',vPos='',vStack=stack,vBet=2.2;
+  if(stack<2)problem='Unter 2 BB ist keine reguläre Preflop-Empfehlung verfügbar.';
+  if(before&&hero==='BB'&&involved.length===0)problem='Alle folden zum Big Blind – keine weitere Entscheidung.';
+  if(!before&&!positions.length)problem='Nach deiner Position sitzt niemand mehr.';
+  if(!before&&!prior.length)problem='Keine erneute Erhöhung – es ist keine zweite Entscheidung erforderlich.';
+  if(before&&involved.length===0){next='RFI';}
+  else if(involved.length){
+   // Repräsentative Position für die Anzeige der vorhandenen Felder; die neue
+   // Engine nutzt alle Eingaben in der vollständigen Action History.
+   const dominant=[...involved].sort((a,b)=>{
+    const bet=x=>x.action==='allin'?x.stack:x.bet;
+    return bet(b)-bet(a);
+   })[0];
+   vPos=dominant.pos;vStack=dominant.stack/10;
+   vBet=dominant.action==='allin'?dominant.stack/10:dominant.bet/10;
+   next=before?(dominant.action==='allin'?'JAM':'OPEN'):'3BET';
   }
-  if(mode==='after'&&(ownRaise<1.5||ownRaise>=stack))problem='Dein Open-Raise muss mindestens 1,5 BB betragen und kleiner als dein Stack sein.';
-  const spot=$('spot');if(spot.value!==next){spot.value=next;refreshSeats(false);}
-  if([...heroPos.options].some(o=>o.value===hero)){heroPos.value=hero;}refreshVillain();
+  const spot=$('spot');
+  if(spot.value!==next){spot.value=next;refreshSeats(false);}
+  if([...heroPos.options].some(o=>o.value===hero))heroPos.value=hero;
+  refreshVillain();
   if(vPos&&[...$('villainPos').options].some(o=>o.value===vPos))$('villainPos').value=vPos;
   $('villainChips').value=String(Math.max(1,Math.round(vStack*lvl)));
-  $('openBB').value=String(mode==='after'?ownRaise:Math.max(1.5,vBet));
+  $('openBB').value=String(Math.max(1.5,before?vBet:ownRaise));
   $('threebetBB').value=String(Math.max(3.5,vBet));
+  const scenario=involved.length?{
+   mode:before?'before':'after',
+   heroStackBB:stack,
+   ownRaiseBB:before?0:ownRaise,
+   actions:involved.map(x=>({
+    position:x.pos,action:x.action,
+    betBB:x.bet/10,stackBB:x.stack/10
+   }))
+  }:null;
+  window.LernPokerScenario=null;
+  if(!problem&&scenario){
+   try{
+    if(!window.LernPokerMultiway)throw Error('Mehrspieler-Rechenmodul ist nicht geladen.');
+    window.LernPokerMultiway.inspect(D,selectedInputs(),scenario);
+    window.LernPokerScenario=scenario;
+   }catch(e){problem=e.message||'Aktion prüfen.';}
+  }
   if(!problem)render();
   else {render();blocked(problem);}
   if(!problem)blocked('');
-  if(mode==='before'&&involved.length===0)summary.textContent='Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
-  else summary.textContent=involved.length?involved.map(v=>v.pos+': '+({call:'Call/Limp',raise:mode==='after'?'3-Bet':'Raise',allin:'All-in'}[v.action])+' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):'Alle gewählten Positionen folden.';
-  // Die Meldung erscheint nur am Ergebnisfeld; nicht doppelt in der Aktionsübersicht.
+  summary.textContent=involved.length?
+    involved.map(v=>v.pos+': '+({call:'Call/Limp',raise:before?'Raise':'3-Bet',allin:'All-in'}[v.action])+
+    ' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):
+    'Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
  }
  // Profilwahl und Einstellungswechsel synchron halten.
  $('level').addEventListener('change',syncScenario);
