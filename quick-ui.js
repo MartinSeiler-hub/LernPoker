@@ -89,6 +89,7 @@ function init(){
   }
   for(const b of $('quick-suits').querySelectorAll('button')){
    const symbol=b.dataset.suit;
+   b.setAttribute('aria-label',SUITS.find(s=>s.symbol===symbol).name+' für Karte '+activeCard);
    const samePhysicalCard=cardRanks[0]===cardRanks[1] && symbol===cardSuits[2-activeCard];
    const chosen=cardSuits[activeCard-1]===symbol;
    b.disabled=samePhysicalCard;
