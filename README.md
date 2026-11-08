@@ -115,3 +115,12 @@ LiveTest unterstützt jetzt **6-Max und 8-Max**. Die zwei sichtbaren Buttons wä
 **Genauigkeit:** Auch für 8-Max ist dies zunächst eine EV-gewichtete **heuristische Modellmischung**, keine durch Preflop-Solver nachgewiesene Gleichgewichtsstrategie. Die Modellgewichtung verwendet die tatsächliche Tischgröße und die 8-Max-Antes, ist aber noch nicht gegen einen unabhängigen Solver kalibriert. Die Testpartie bleibt privat, abgesprochen und ohne Geldeinsatz. Das Tool greift weder auf eine Online-Pokerplattform zu noch setzt es automatisch Aktionen.
 
 Bei einem laufenden fixierten LiveTest kann das Tischformat erst wieder nach Handabschluss oder protokolliertem Abbruch geändert werden. Die offlinefähige PWA lädt dafür Cache v12.
+
+
+## LiveTest V12: Dateneingabe unabhängig vom Ergebnisbereich
+
+Der bestehende Schnell-Eingabebereich wird beim Umschalten in **LiveTest** in einen **eigenen, unmittelbar sichtbaren Eingabebereich** verschoben, der nicht mehr innerhalb des ein-/ausblendbaren Ergebnis- und Protokollpanels liegt. Karten, Position, Gegnereinsätze, sämtliche Stacks und der 6-/8-Max-Schalter sind dort ohne Wechsel zu „Empfehlung“ bedienbar. Die Eingaben sind weiterhin dieselben Datenobjekte; sie können direkt in der LiveTest-Sicht verändert werden.
+
+**Nur bei einer bereits fixierten Hand** sind die Eingaben gesperrt und ausgeblendet. Ein Hinweis über der Empfehlung erklärt dies. Mit der zusätzlichen gut sichtbaren Taste **„Fixierte Hand abbrechen und neue eingeben“** wird die aktuelle Hand mit Status „Abgebrochen“ protokolliert und die Eingabe wieder freigegeben. Alternativ kann die Hand regulär abgeschlossen und mit Ergebnis gespeichert werden. Eine fixierte Empfehlung wird weiterhin nicht neu gezogen.
+
+Diese strukturelle Änderung ist erforderlich, weil die vorherige Version die Eingabemaske in einen Bereich eingebettet hatte, dessen Sichtbarkeit unabhängig gesteuert wurde. Damit bestand das Risiko, dass LiveTest keine editierbaren Felder anzeigte. Die neue Struktur trennt Eingabe und Ergebnis ausdrücklich.
