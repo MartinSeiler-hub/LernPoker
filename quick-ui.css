@@ -270,3 +270,5 @@
  .live-actual-fields{grid-template-columns:1fr}
  .live-save-actions button{width:100%}
 }
+
+.live-situation{font-size:12px;line-height:1.45;color:#c3d4e7;background:#142b43;border:1px solid #435e7b;border-radius:8px;padding:9px 10px;margin:9px 0}
