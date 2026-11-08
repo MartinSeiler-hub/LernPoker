@@ -90,6 +90,15 @@ function init(){
  }
  $('card-one').addEventListener('click',()=>{activeCard=1;updateCards()});
  $('card-two').addEventListener('click',()=>{activeCard=2;updateCards()});
+
+ // Auswahl aus der 169-Hand-Matrix in die Zwei-Karten-Tasten übernehmen.
+ $('matrix').addEventListener('click',e=>{
+  const cell=e.target.closest('.cell');if(!cell)return;
+  const h=(cell.textContent||'').trim();
+  if(!/^[AKQJT98765432]{2}[so]?$/.test(h))return;
+  cardRanks=[h[0],h[1]];suited=h.endsWith('s')?'s':'o';activeCard=1;updateCards();
+ });
+
  $('quick-suited').addEventListener('click',()=>{suited='s';updateCards()});
  $('quick-offsuit').addEventListener('click',()=>{suited='o';updateCards()});
  function updateBb(){
