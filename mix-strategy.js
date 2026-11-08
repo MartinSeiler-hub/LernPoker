@@ -84,6 +84,11 @@ function calculate(data,inputs,training,hand,baseHand){
   return {enabled:false,reason:'Keine gültige Aktion für diese Spielsituation',hand,context:{hero:ctx.hero}};
  }
  const maxEv=Math.max(...candidates.map(c=>c.ev));
+ // Drop clearly dominated fold candidates. In particular AA/AKs should never
+ // be shown as a positive-frequency fold in ordinary 6-max Chip-EV play.
+ const dominanceGap=Math.max(.95,.55*ctx.pot);
+ const workable=candidates.filter(c=>c.action!=='FOLD'||maxEv-c.ev<=dominanceGap);
+ if(workable.length) candidates.splice(0,candidates.length,...workable);
  // EV gap tolerance reflects systematic uncertainty in the simplified opponent model.
  // This is entropy-regularized decision-making, NOT a Nash equilibrium calculation.
  const temperature=clip(ctx.pot*.20,.35,1.9);
