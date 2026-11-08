@@ -37,7 +37,7 @@ function init(){
  const seatId=(side,pos)=>side+':'+pos;
  const getState=(side,pos)=>{
   const id=seatId(side,pos);
-  if(!states.has(id))states.set(id,{action:'fold',bet:22,stack:Math.round(Math.max(2,heroBB()||20)*10)});
+  if(!states.has(id))states.set(id,{action:'fold',bet:22,stack:Math.round(Math.max(2,heroBB()||20)*10),customStack:false});
   return states.get(id);
  };
  function showSetup(){welcome.hidden=false;document.body.style.overflow='hidden';welcome.querySelector('button').focus();}
@@ -97,7 +97,8 @@ function init(){
   input.value=digits(input.value);
   const v=tenth(input.value);
   $('bb-caption').textContent=Number.isFinite(v)?decimal(v)+' BB':'– BB';
-  syncScenario();
+  for(const s of states.values())if(!s.customStack){s.stack=Math.round(Math.max(0.1,v||20)*10);if(s.action==='allin')s.bet=s.stack;}
+  renderSeatRows();syncScenario();
  }
  $('quick-bb').addEventListener('input',updateBb);
  $('quick-bb').addEventListener('blur',()=>{if(!Number.isFinite(heroBB())||heroBB()<=0){$('quick-bb').value='200';updateBb()}});
@@ -150,7 +151,7 @@ function init(){
      const stackGroup=el('label','', 'Stack vor der Hand (BB)');const st=el('input','');
      st.type='text';st.inputMode='numeric';st.pattern='[0-9]*';st.maxLength=5;st.value=String(s.stack);
      const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
-     st.addEventListener('input',()=>{st.value=digits(st.value);s.stack=Number(st.value);if(s.action==='allin')s.bet=s.stack;stackValue.textContent=decimal(s.stack/10)+' BB';head.textContent=pos+' · '+(s.action==='allin'?'All-in':'Einsatz')+' · '+decimal((s.action==='allin'?s.stack:s.bet)/10)+' BB ▾';syncScenario()});
+     st.addEventListener('input',()=>{st.value=digits(st.value);s.stack=Number(st.value);s.customStack=true;if(s.action==='allin')s.bet=s.stack;stackValue.textContent=decimal(s.stack/10)+' BB';head.textContent=pos+' · '+(s.action==='allin'?'All-in':'Einsatz')+' · '+decimal((s.action==='allin'?s.stack:s.bet)/10)+' BB ▾';syncScenario()});
      stackGroup.append(st,stackValue);numberFields.append(stackGroup);
      if(s.action==='allin')numberFields.append(el('p','quick-note','All-in-Einsatz = Spielerstack.'));
      details.append(numberFields);
@@ -194,7 +195,7 @@ function init(){
         else if(v.action==='allin'){next='JAM';}
         else problem='Limp-/Call-Pots können im vorhandenen Heads-up-Modell noch nicht zuverlässig bewertet werden.';
       }else{
-        if(v.action==='raise'){next='3BET';if(vBet<=ownRaise)problem='Die 3-Bet muss höher als deine Eröffnung sein.';}
+        if(v.action==='raise'){next='3BET';if(vBet<=ownRaise||vBet<3.5)problem='Die 3-Bet muss höher als deine Eröffnung sein und mindestens 3,5 BB betragen (Modellgrenze).';}
         else problem='Call oder All-in nach deinem eigenen Raise ist noch kein unterstützter isolierter 3-Bet-Fall.';
       }
     }else if(involved.length===0){
