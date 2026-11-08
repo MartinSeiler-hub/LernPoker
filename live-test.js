@@ -1,4 +1,4 @@
-/* LernPoker LiveTest: private, consensual six-max chip-EV field test without stakes.
+/* LernPoker LiveTest: private, consensual 6-/8-max chip-EV field test without stakes.
  * One immutable weighted sample per locked hand, local records; not GTO verified.
  */
 (function(global){
@@ -24,7 +24,6 @@ function load(){
 function showAction(x){
  if(!x)return '–';
  let s=ACTIONS[x.action]||x.action;
- if(x.bluff&&isRaise(x.action))s+='-Bluff';
  if(x.action==='JAM')return s;
  if(isRaise(x.action)&&Number.isFinite(x.toBB))return s+' auf '+numeric(x.toBB)+' BB';
  if(x.action==='CALL'&&Number.isFinite(x.toBB))return s+' · '+numeric(x.toBB)+' BB';
@@ -44,7 +43,7 @@ function draw(){
 function selection(){
  if(!global.LernPokerMix||typeof selectedInputs!=='function'||typeof selectedHand!=='string')return {error:'Strategie noch nicht geladen'};
  const inputs=selectedInputs();
- if(Number(inputs.players)!==6)return {error:'LiveTest ist zunächst für sechs Spieler ausgelegt. Wähle das 6-Max-Turnier.'};
+ if(![6,8].includes(Number(inputs.players)))return {error:'Bitte 6-Max oder 8-Max wählen.'};
  if(document.querySelector('.panel.accent')?.classList.contains('quick-blocked'))return {error:plain($('quick-range-limit')?.textContent||'Eingaben prüfen.')};
  const training=global.LernPokerTrainingState;
  const base=typeof current!=='undefined'?current?.hands?.[selectedHand]:null;
@@ -170,11 +169,10 @@ function renderHistory(){
  const completed=data.history.filter(h=>h.status==='completed');
  const logged=completed.filter(h=>Number.isFinite(h.deltaBB));
  const net=logged.reduce((s,h)=>s+h.deltaBB,0);
- const bluffs=completed.filter(h=>h.picked?.bluff);
  const followed=completed.filter(h=>h.followed).length;
  const n=completed.length;
  $('live-stats').textContent=n+' abgeschlossene Hände · '+followed+' Empfehlung befolgt · '+
-  bluffs.length+' Bluffempfehlungen · '+logged.length+' Ergebnisse in BB ('+
+  logged.length+' Ergebnisse in BB ('+
   (net>=0?'+':'')+numeric(net)+' BB gesamt)';
  const wrap=$('live-history-list');wrap.replaceChildren();
  for(const h of data.history.slice(0,25)){
@@ -196,8 +194,7 @@ function render(){
  if(active){
   $('live-sticky-hand').textContent=active.physicalCards+' · '+active.heroPosition;
   $('live-sticky-action').textContent=showAction(active.picked);
-  $('live-sticky-meta').textContent='Hand fixiert · Modellmix '+Math.round(active.picked.p*100)+' % · '+
-     (active.picked.bluff?'Bluffkandidat · ':'')+'nicht solverbestätigt';
+  $('live-sticky-meta').textContent='Hand fixiert · '+active.players+' Spieler';
   $('live-locked-hand').textContent='Hand '+active.physicalCards+' · '+active.heroPosition+
     ' · '+numeric(active.stackBB)+' BB';
   $('live-locked-action').textContent=showAction(active.picked);
@@ -208,15 +205,10 @@ function render(){
    (Number.isFinite(a.stackBB)?' (Stack '+numeric(a.stackBB)+' BB)':'')).join(' · '):
    'Alle vorherigen Positionen folden';
   $('live-locked-situation').textContent=actorText;
-  const mix=$('live-locked-mix');mix.replaceChildren();
-  for(const entry of active.mix){
-   const pill=document.createElement('span');pill.className='live-mix-pill';
-   if(entry.action===active.picked.action&&entry.toBB===active.picked.toBB)pill.classList.add('active');
-   pill.textContent=showAction(entry)+' '+Math.round(entry.prob*100)+' %';
-   mix.appendChild(pill);
-  }
+  // Gewichte und Alternativen bleiben ausschließlich im lokalen Testdatensatz.
+  // Die LiveTest-Ansicht zeigt nie die Modellwahrscheinlichkeiten.
  }else{
-  $('live-sticky-hand').textContent='LiveTest · 6-Max';
+  $('live-sticky-hand').textContent='LiveTest · '+(Number($('players')?.value)===8?'8-Max':'6-Max');
   $('live-sticky-action').textContent='Hand vorbereiten';
   $('live-sticky-meta').textContent='Nach der Eingabe einmal ziehen und fixieren';
  }
@@ -231,13 +223,15 @@ function init(){
   '<div id="live-sticky-meta" class="live-sticky-meta"></div>';
  nav.before(sticky);
  const panel=document.createElement('section');panel.className='panel live-panel';panel.id='live-test';panel.hidden=true;
- panel.innerHTML='<h2>LiveTest · 6-Max</h2>'+
+ panel.innerHTML='<h2>LiveTest · privater Tisch</h2>'+ 
+  '<div class="live-format"><span>Spieler am Tisch</span><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+ 
+  '<div id="live-input-slot"></div>'+ 
   '<div class="live-caption">Privater Test mit Zustimmung aller Beteiligten · ohne Geld · Ergebnisse nur auf diesem Gerät</div>'+
   '<div id="live-prep"><p>Oben Hand, Position, Stacks und Gegneraktionen einstellen. Anschließend die Empfehlung für genau diese Hand fixieren.</p>'+
   '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
   '<div id="live-locked" hidden><div id="live-locked-hand" class="live-locked-hand"></div>'+
   '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
-  '<div id="live-locked-mix" class="live-mix-list"></div>'+
+
   '<div class="live-actual-fields"><label>Tatsächlich gespielt<select id="live-actual">'+
   '<option value="recommended">Genau wie empfohlen</option><option value="FOLD">Fold</option><option value="CHECK">Check</option>'+
   '<option value="CALL">Call</option><option value="LIMP">Limp</option><option value="RAISE">Raise</option>'+
