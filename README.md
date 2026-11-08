@@ -64,3 +64,41 @@ Die normale Lernoberfläche konzentriert sich vorerst **nur auf Preflop-Chip-EV*
 
 
 **Modellgrenzen:** Das „optimale“ Raise-Sizing wird **nicht** durch einen vollständigen GTO-Solver ermittelt. Die Rangewahl, zukünftige Fold-/Call-Entscheidungen, Multiway-Equities und die Postflop-Verläufe sind weiterhin vereinfachte Modelle. Die Ausgaben sind zum Lernen außerhalb laufender Online-Poker-Hände vorgesehen.
+
+
+## 6-Max-Mischstrategie und Blufftraining (V9)
+
+Im ersten Schritt erhält **nur die Tischgröße 6-Max** eine gemischte Handlungsempfehlung. Die fixe Kopfzeile zeigt eine **einmal je Situation gezogene Aktion**. Die Ziehung bleibt bei Wiederholungs-Renderings stabil. „Neu ziehen“ erzeugt eine andere Ziehung anhand derselben Gewichte. Direkt darunter erscheint eine horizontal scrollbar kompakte Zeile der vollständigen Aktion-/Raisegrößen-Mischung, z. B. \`3-Bet auf 5,5 BB 19 % · Fold 18 % · Call 17 % · …\`.
+
+Die Entscheidung berücksichtigt neben Call und Fold **legal verfügbare 33-/50-/75-/100-%-Pot-Raises** und ggf. All-ins. Die Potgröße und die Raisegrößen stammen aus den vorhandenen Modellrechnungen. Für bestimmte suited Ace-Wheel-Hände (A2s–A5s) und einige geeignete King-suited-Hände werden spätpositionsbezogene **3-Bet-Bluffkandidaten** geprüft. Eine tatsächlich gezogene aggressive Aktion kann z. B. als \`3-Bet-Bluff auf 5,5 BB\` erscheinen.
+
+### Wichtig: Diese Wahrscheinlichkeiten sind NICHT solverbestätigte GTO-Frequenzen
+
+Die ausgewiesenen Prozentwerte sind ein **EV-gewichteter Trainingsmix**: Die vereinfachte Mehrspieler-Chip-EV-Schätzung bewertet die Aktionen und erlaubten Raisegrößen, anschließend werden nahe Varianten mit einer expliziten Temperatur- und Priorregel gewichtet. Die Normalisierung ergibt 100 %. Das ist mathematisch nachvollziehbares, aber **nicht gleichgewichtslösendes** Verhalten. Es gibt bisher **keinen Nachweis geringer Exploitability**. Die Entscheidung bleibt eine experimentelle Trainingsstrategie, nicht ein professioneller GTO-Chart.
+
+Die verteilten Raisegrößen sind *Gesamteinsätze in Big Blinds*. Für RFI wird ein freier Limp aus frühen Positionen bewusst nicht als regulärer Mixkandidat betrachtet, weil das bisherige vereinfachte Modell solche schwachen Hände zu häufig gelimpt hat; SB-Limps sind weiterhin möglich. Andere Tischgrößen behalten die bisherige deterministische Empfehlung.
+
+Die Funktion ist für den ausdrücklich vereinbarten **privaten Pokerabend ohne Geldeinsatz** sowie das Lernen und die Nachanalyse außerhalb laufender Online-Poker-Hände vorgesehen. Es erfolgt weder eine Verbindung zu einer Pokerplattform noch eine automatische Handlung am Tisch. Die Prozentwerte und der Bluffhinweis sind keine Erfolgsgarantie.
+
+### Nächste wissenschaftliche Validierung
+
+Die jeweilige gemischte Rangetabelle und der EV-Regret müssen durch echte 6-Max-Preflop-Solverstrategien bei den relevanten effektiven Stacks und Antes ersetzt oder gegen solche Strategien kalibriert werden. Erst mit Solverreferenzen und Best-Response-/Regret-Tests lässt sich die angestrebte GTO-Nähe sinnvoll messen.
+
+
+## LiveTest – privater 6-Max-Tisch (V10)
+
+Der zusätzliche Reiter **LiveTest** ist für einen Pokerabend **ohne Geld** und mit Einverständnis der beteiligten Freunde vorgesehen. Dieselben schnellen Eingabefelder für Karten, Positionen, Stacks und Aktionen werden wiederverwendet, ohne eine doppelte Dateneingabe.
+
+**Ablauf je Hand:**
+
+1. 6-Max auswählen; Hand, eigene Position, Stackgrößen und vorherige Aktionen erfassen.
+2. **„Empfehlung einmal ziehen und fixieren“** tippen. Die App berechnet den gemischten 6-Max-Trainingsvorschlag und zieht genau eine Aktion samt gegebenenfalls konkreter Raisehöhe. Die Ziehung wird unmittelbar lokal gespeichert.
+3. Während diese Hand fixiert ist, sind die normalen Eingabefelder im LiveTest gesperrt. Die gezogene Aktion bleibt oben fest sichtbar und **kann nicht erneut gezogen werden**; alternative Aktionen werden lediglich mit ihren Modellgewichten gezeigt.
+4. Nach dem tatsächlichen Spiel die gespielte Aktion, gegebenenfalls die Raisehöhe, das Ergebnis, optional den Gewinn/Verlust in BB und eine kurze Notiz angeben.
+5. **„Hand abschließen und speichern“** protokolliert die Daten. Ein Abbruch wird ebenfalls als solcher erfasst und nicht stillschweigend entfernt. Danach kann eine neue Hand vorbereitet werden.
+
+**Teststatistik und Export:** Anzahl abgeschlossener Hände, Übereinstimmung mit der gezogenen Empfehlung, Bluffempfehlungen und die Summe der ausdrücklich eingetragenen BB-Ergebnisse. Bis zu 1.000 lokale Datensätze bleiben im Browser gespeichert. Der Verlauf kann als semikolongetrennte CSV in die Zwischenablage kopiert werden; bei fehlender Clipboard-Berechtigung erscheint ein manuell kopierbares Textfeld. Verlaufsdaten werden weder an einen Pokeranbieter noch an einen anderen Server gesendet.
+
+**Wichtige Grenzen:** Die 6-Max-Mischfrequenzen sind derzeit ein heuristischer EV-Trainingsmix und **keine durch einen Solver bestätigten GTO-Frequenzen**. Live-Ergebnisse weniger Hände können weder GTO-Nähe noch eine überlegene Strategie beweisen; Gegner, Positionen und Blattverteilungen ändern sich ständig. Eine aussagefähige Untersuchung benötigt viele Hände, ein konsistentes Protokoll und einen unabhängigen Solver-Benchmark. Das Programm setzt keine Aktionen selbst am Tisch um.
+
+Die Touch-Eingabe und die bereits geladenen Rechenfunktionen sind nach Installation der PWA offline verwendbar. Für die Persistenz von Verlauf und fixierter Empfehlung muss der Browser lokale Speicherung zulassen.
