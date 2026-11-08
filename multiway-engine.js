@@ -53,7 +53,7 @@ function inspect(data,inputs,scenario){
   if(!Number.isFinite(seat.bet)||seat.bet<blind(seat.pos)-1e-6||seat.bet>maximum+1e-5)throw Error(e.position+': Einsatz größer als verfügbarer Stack.');
   // A short all-in raise is possible; it does not automatically reopen betting.
   if(e.action==='raise' && seat.bet<=top+1e-6)throw Error(e.position+': Raise muss höher als der bisherige Einsatz sein.');
-  if(e.action==='call' && Math.abs(seat.bet-top)>.11 && seat.bet+1e-6<maximum)
+  if(e.action==='call' && Math.abs(seat.bet-top)>Math.max(.15,2*aBB) && seat.bet+1e-6<maximum)
    throw Error(e.position+': Call muss den bisherigen Einsatz ausgleichen.');
   if(e.action==='raise'){lastRaise=Math.max(1,seat.bet-top);top=seat.bet;}
   if(e.action==='allin'&&seat.bet>top){lastRaise=Math.max(1,seat.bet-top);top=seat.bet;}
@@ -207,8 +207,9 @@ function computeMatrix(data,inputs,scenario){
  const hands={},comboCounts={FOLD:0,CHECK:0,CALL:0,RAISE:0,'3BET':0,'4BET':0,JAM:0,LIMP:0};
  const unopened=ctx.active.length===0;
  for(const key of allKeys){
-  const alternatives={FOLD:0};
-  let best={action:'FOLD',ev:0,estimatedEquity:0},eq=0;
+  const noFacingBet=choices.some(c=>c.key==='CHECK');
+  const alternatives=noFacingBet?{}:{FOLD:0};
+  let best={action:noFacingBet?'CHECK':'FOLD',ev:0,estimatedEquity:0},eq=0;
   const strength=order[key];
   for(const choice of choices){
    if(choice.key==='FOLD')continue;
