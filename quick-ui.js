@@ -46,6 +46,49 @@ function init(){
  const seats=()=>PokerModel.POSITIONS[Number($('players').value)]||[];
  const ownBB=()=>{const p=D.profiles[$('profile').value],l=p.levels.find(x=>x.level===Number($('level').value))||p.levels[0];return l.bb;};
  const heroBB=()=>tenth($('quick-bb').value);
+
+ const getStack=pos=>{
+  if(pos===heroPos.value)return heroBB();
+  if(!seatStacks.has(pos))seatStacks.set(pos,{stack:Math.round(Math.max(2,heroBB()||20)*10),custom:false});
+  return seatStacks.get(pos).stack/10;
+ };
+ function setStack(pos,value,custom=true){
+  if(!seats().includes(pos)||pos===heroPos.value||!Number.isFinite(value)||value<.1||value>1000)return false;
+  const st=Math.round(value*10);
+  seatStacks.set(pos,{stack:st,custom});
+  for(const side of ['before','after']){
+   const x=states.get(side+':'+pos);
+   if(x){x.stack=st;if(x.action==='allin')x.bet=st;}
+  }
+  return true;
+ }
+ function renderStacks(){
+  const box=$('quick-stack-grid');box.innerHTML='';
+  for(const pos of seats()){
+   if(pos===heroPos.value)continue;
+   const wrap=el('label','quick-other-stack','');
+   const heading=el('strong','',pos);
+   const input=el('input','');input.type='text';input.inputMode='numeric';input.pattern='[0-9]*';
+   input.maxLength=5;input.value=mask(getStack(pos));input.setAttribute('aria-label',pos+' Stack; letzte Ziffer Zehntel-BB');
+   const display=el('span','quick-digits-value',decimal(getStack(pos))+' BB');
+   input.addEventListener('input',()=>{
+    input.value=digits(input.value);
+    const n=tenth(input.value);
+    display.textContent=Number.isFinite(n)?decimal(n)+' BB':'– BB';
+    if(Number.isFinite(n)&&n>=.1){setStack(pos,n,true);syncScenario();}
+   });
+   input.addEventListener('blur',()=>{
+    const n=tenth(input.value);
+    if(!Number.isFinite(n)||n<.1){input.value=mask(getStack(pos));display.textContent=decimal(getStack(pos))+' BB';}
+   });
+   wrap.append(heading,input,display);box.append(wrap);
+  }
+ }
+ $('quick-stack-reset').addEventListener('click',()=>{
+  for(const pos of seats())if(pos!==heroPos.value)setStack(pos,heroBB(),false);
+  renderStacks();renderSeatRows();syncScenario();
+ });
+
  const seatId=(side,pos)=>side+':'+pos;
  const getState=(side,pos)=>{
   const id=seatId(side,pos);
