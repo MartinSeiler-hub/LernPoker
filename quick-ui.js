@@ -23,8 +23,8 @@ function init(){
  function syncBb(){bb.querySelector('input').value=nice(Number($('heroChips').value)/levelBb());err.textContent='';}
  function applyBb(commit){
   const input=$('quick-bb'),raw=input.value.trim().replace(/\s/g,'').replace(',','.');
-  if(!/^\d+(\.\d{0,1})?$/.test(raw)||Number(raw)<2||Number(raw)>1000){
-    err.textContent='Bitte einen Wert von 2,0 bis 1.000,0 BB mit einer Nachkommastelle eingeben.';return false;
+  if(!/^\d+(\.\d{0,1})?$/.test(raw)||Number(raw)<0.1||Number(raw)>1000){
+    err.textContent='Bitte einen Wert von 0,1 bis 1.000,0 BB mit einer Nachkommastelle eingeben.';return false;
   }
   err.textContent='';
   const chips=Math.round(Number(raw)*levelBb());$('heroChips').value=String(chips);
