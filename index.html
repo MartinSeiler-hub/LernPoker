@@ -604,11 +604,11 @@ function newQuiz(){
 function selectTab(t){
  tab=t;
  document.querySelectorAll('.nav-mobile button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===t);b.setAttribute('aria-selected',String(b.dataset.tab===t))});
- const form=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent'),picker=document.getElementById('quick-picker'),quiz=document.getElementById('mobile-quiz'),icm=document.getElementById('mobile-icm');
- const modelSections=[...document.querySelectorAll('.container > .panel')].filter(x=>x!==form && x!==matrix && x!==picker && x!==quiz && x!==icm);
- form.hidden=t==='icm';picker.hidden=!(t==='trainer'||t==='matrix');
+ const form=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent'),picker=document.getElementById('quick-picker'),quiz=document.getElementById('mobile-quiz'),icm=document.getElementById('mobile-icm'),live=document.getElementById('live-test');
+ const modelSections=[...document.querySelectorAll('.container > .panel')].filter(x=>x!==form && x!==matrix && x!==picker && x!==quiz && x!==icm && x!==live);
+ form.hidden=t==='icm';picker.hidden=!(t==='trainer'||t==='matrix'||t==='live');
  matrix.hidden=!(t==='trainer'||t==='matrix');
- quiz.hidden=t!=='quiz';icm.hidden=t!=='icm';
+ quiz.hidden=t!=='quiz';icm.hidden=t!=='icm';if(live)live.hidden=t!=='live';
  for(const p of modelSections)p.hidden=true;
  document.querySelectorAll('.extra-panel').forEach(x=>x.hidden=true);
  const compact=t==='trainer';
@@ -616,12 +616,13 @@ function selectTab(t){
   const v=matrix.querySelector(selector);if(v)v.style.display=compact?'none':'';
  }
  if(t==='quiz')newQuiz();
+ window.dispatchEvent(new CustomEvent('lernpoker:tabchange',{detail:{tab:t}}));
  window.scrollTo({top:0,behavior:'instant'});
 }
 function initMobile(){
  const base=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent');
  if(!base||!matrix)return;
- const nav=el('nav',{class:'nav-mobile','aria-label':'Lernansichten'},'<button data-tab="trainer" class="active" aria-selected="true">Empfehlung</button><button data-tab="matrix" aria-selected="false">169 Hände</button><button data-tab="quiz" aria-selected="false">Lernen</button>');
+ const nav=el('nav',{class:'nav-mobile','aria-label':'Lernansichten'},'<button data-tab="trainer" class="active" aria-selected="true">Empfehlung</button><button data-tab="matrix" aria-selected="false">169 Hände</button><button data-tab="quiz" aria-selected="false">Lernen</button><button data-tab="live" aria-selected="false">LiveTest</button>');
  base.before(nav);
  const picker=el('section',{class:'panel',id:'quick-picker'},'<h2>Meine Karten</h2><div class="mobile-pick"><label>Karte 1<select id="q-r1"></select></label><label>Karte 2<select id="q-r2"></select></label><label>Gleichfarbig?<select id="q-s"><option value="s">Suited</option><option value="o">Offsuit</option></select></label></div><div id="q-selected" class="mobile-hand">AKs</div>');
  base.after(picker);
@@ -648,4 +649,5 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
 <script src="./quick-ui.js"></script>
 <script src="./mix-strategy.js"></script>
 <script src="./recommendation-ui.js"></script>
+<script src="./live-test.js"></script>
 </body></html>
