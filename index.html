@@ -621,7 +621,7 @@ function selectTab(t){
 function initMobile(){
  const base=document.querySelector('.form-panel'),matrix=document.querySelector('.panel.accent');
  if(!base||!matrix)return;
- const nav=el('nav',{class:'nav-mobile','aria-label':'Lernansichten'},'<button data-tab="trainer" class="active" aria-selected="true">Empfehlung</button><button data-tab="matrix" aria-selected="false">169 Hände</button><button data-tab="quiz" aria-selected="false">Lernen</button><button data-tab="icm" aria-selected="false">ICM</button>');
+ const nav=el('nav',{class:'nav-mobile','aria-label':'Lernansichten'},'<button data-tab="trainer" class="active" aria-selected="true">Empfehlung</button><button data-tab="matrix" aria-selected="false">169 Hände</button><button data-tab="quiz" aria-selected="false">Lernen</button>');
  base.before(nav);
  const picker=el('section',{class:'panel',id:'quick-picker'},'<h2>Meine Karten</h2><div class="mobile-pick"><label>Karte 1<select id="q-r1"></select></label><label>Karte 2<select id="q-r2"></select></label><label>Gleichfarbig?<select id="q-s"><option value="s">Suited</option><option value="o">Offsuit</option></select></label></div><div id="q-selected" class="mobile-hand">AKs</div>');
  base.after(picker);
@@ -644,5 +644,8 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
 </script>
 
 <script src="./multiway-engine.js"></script>
+<script src="./raise-sizing.js"></script>
 <script src="./quick-ui.js"></script>
+<script src="./recommendation-ui.js"></script>
+<script src="./voice-input.js"></script>
 </body></html>

@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const RANKS='AKQJT98765432', FORMAT_KEY='LernPokerTournament_v2';
 const SUITS=[{symbol:'♠',name:'Pik'},{symbol:'♥',name:'Herz'},{symbol:'♦',name:'Karo'},{symbol:'♣',name:'Kreuz'}];
 let mode='before', activeCard=1, cardRanks=['A','K'], cardSuits=['♠','♠'], currentStatus='';
-const states=new Map();
+const states=new Map(),seatStacks=new Map();
 const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!==undefined)x.innerHTML=html;return x;};
 const decimal=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 const digits=v=>String(v||'').replace(/\D/g,'').slice(0,5);
@@ -14,7 +14,7 @@ function init(){
  const form=document.querySelector('.form-panel'),picker=$('quick-picker'),nav=document.querySelector('.nav-mobile');
  if(!form||!picker||!nav||!window.PokerModel)return;
  const edit=el('button','', '⚙ Turnierformat ändern');edit.type='button';edit.id='change-tournament';document.querySelector('header').appendChild(edit);
- const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten · 2-$-MTT</span></button></div></div>');
+ const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten</span></button></div></div>');
  welcome.id='format-setup';welcome.hidden=true;welcome.setAttribute('role','dialog');welcome.setAttribute('aria-modal','true');document.body.appendChild(welcome);
  const mobilePick=picker.querySelector('.mobile-pick');
  const stackBox=el('div','quick-stack','<label for="quick-bb">Mein Stack · BB</label><div class="quick-stack-line"><input id="quick-bb" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="5" aria-describedby="bb-caption bb-example" value="800"><strong id="bb-caption">80,0 BB</strong></div><small id="bb-example">Nur Ziffern: 154 ergibt 15,4 BB; 80 ergibt 8,0 BB.</small>');
@@ -22,6 +22,9 @@ function init(){
  const heroPos=$('heroPos');heroPos.closest('.group').hidden=true;
  const positionBox=el('section','quick-section','<h3>Meine Position</h3><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
  stackBox.after(positionBox);
+ const stackPanel=el('section','quick-section quick-all-stacks',
+   '<div class="quick-stack-header"><h3>Stacks der übrigen Spieler</h3><button type="button" id="quick-stack-reset">Alle = mein Stack</button></div><div id="quick-stack-grid" class="quick-stack-grid"></div>');
+ positionBox.after(stackPanel);
  mobilePick.hidden=true;
  const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1 · A♠</button><button id="card-two" type="button">Karte 2 · K♠</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert für ausgewählte Karte wählen"></div><div class="quick-suit-buttons" id="quick-suits" role="group" aria-label="Farbe für ausgewählte Karte wählen"></div>');
  mobilePick.before(cards);
@@ -31,18 +34,65 @@ function init(){
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
- const advanced=el('details','', '<summary>Weitere Angaben · Level, Tischgröße, ICM</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
+ const advanced=el('details','', '<summary>Weitere Angaben · Blindlevel und Tischgröße</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
+ const icmControl=$('useICM');
+ if(icmControl){icmControl.checked=false;icmControl.closest('.group').hidden=true;}
+ const icmNav=nav.querySelector('button[data-tab="icm"]');
+ if(icmNav)icmNav.remove();
  for(const id of ['profile','spot','heroChips','villainChips','villainPos','openBB','threebetBB','heroPos']){$(id).closest('.group').hidden=true;}
- advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Das Rechenmodell verwendet geschätzte Chip-EV-Strategien und ist keine vollständig gelöste GTO-Strategie. Mehrere aktive Gegner und komplexe Action-Trees werden noch nicht vollständig unterstützt. Nur zum Lernen und zur Nachanalyse außerhalb laufender Online-Partien.</p></details>'));
+ advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Die Empfehlungen nutzen ein vereinfachtes Chip-EV-Modell mit angenommener Gegnertaktik und Multiway-Equity, kein exakter GTO-Solver. Einsatz- und Stackangaben werden verwendet; Preisgelder und ICM bleiben in dieser Lernversion deaktiviert. Die Mikrofonfunktion kann je nach Browser eine Internetverbindung erfordern und verarbeitet Sprache über die Browser-Spracherkennung. Nur für Lern- und Nachanalysezwecke außerhalb laufender Online-Partien.</p></details>'));
  const accent=document.querySelector('.panel.accent');
  const block=el('div','quick-limit','');block.id='quick-range-limit';accent.querySelector('h2').after(block);
  const seats=()=>PokerModel.POSITIONS[Number($('players').value)]||[];
  const ownBB=()=>{const p=D.profiles[$('profile').value],l=p.levels.find(x=>x.level===Number($('level').value))||p.levels[0];return l.bb;};
  const heroBB=()=>tenth($('quick-bb').value);
+
+ const getStack=pos=>{
+  if(pos===heroPos.value)return heroBB();
+  if(!seatStacks.has(pos))seatStacks.set(pos,{stack:Math.round(Math.max(2,heroBB()||20)*10),custom:false});
+  return seatStacks.get(pos).stack/10;
+ };
+ function setStack(pos,value,custom=true){
+  if(!seats().includes(pos)||pos===heroPos.value||!Number.isFinite(value)||value<.1||value>1000)return false;
+  const st=Math.round(value*10);
+  seatStacks.set(pos,{stack:st,custom});
+  for(const side of ['before','after']){
+   const x=states.get(side+':'+pos);
+   if(x){x.stack=st;if(x.action==='allin')x.bet=st;}
+  }
+  return true;
+ }
+ function renderStacks(){
+  const box=$('quick-stack-grid');box.innerHTML='';
+  for(const pos of seats()){
+   if(pos===heroPos.value)continue;
+   const wrap=el('label','quick-other-stack','');
+   const heading=el('strong','',pos);
+   const input=el('input','');input.type='text';input.inputMode='numeric';input.pattern='[0-9]*';
+   input.maxLength=5;input.value=mask(getStack(pos));input.setAttribute('aria-label',pos+' Stack; letzte Ziffer Zehntel-BB');
+   const display=el('span','quick-digits-value',decimal(getStack(pos))+' BB');
+   input.addEventListener('input',()=>{
+    input.value=digits(input.value);
+    const n=tenth(input.value);
+    display.textContent=Number.isFinite(n)?decimal(n)+' BB':'– BB';
+    if(Number.isFinite(n)&&n>=.1){setStack(pos,n,true);renderSeatRows();syncScenario();}
+   });
+   input.addEventListener('blur',()=>{
+    const n=tenth(input.value);
+    if(!Number.isFinite(n)||n<.1){input.value=mask(getStack(pos));display.textContent=decimal(getStack(pos))+' BB';}
+   });
+   wrap.append(heading,input,display);box.append(wrap);
+  }
+ }
+ $('quick-stack-reset').addEventListener('click',()=>{
+  for(const pos of seats())if(pos!==heroPos.value)setStack(pos,heroBB(),false);
+  renderStacks();renderSeatRows();syncScenario();
+ });
+
  const seatId=(side,pos)=>side+':'+pos;
  const getState=(side,pos)=>{
   const id=seatId(side,pos);
-  if(!states.has(id))states.set(id,{action:'fold',bet:side==='after'?75:22,stack:Math.round(Math.max(2,heroBB()||20)*10),customStack:false});
+  if(!states.has(id))states.set(id,{action:'fold',bet:side==='after'?75:22,stack:Math.round(Math.max(.1,getStack(pos))*10),customStack:false});
   return states.get(id);
  };
  function showSetup(){welcome.hidden=false;document.body.style.overflow='hidden';welcome.querySelector('button').focus();}
@@ -50,10 +100,10 @@ function init(){
  function setProfile(key){
   if(!D.profiles[key])return;
   $('profile').value=key;$('level').value='1';setupProfile(false);
-  states.clear();mode='before';
+  states.clear();seatStacks.clear();mode='before';
   $('quick-bb').value=mask(D.profiles[key].startstack/ownBB());
   cardRanks=['A','K'];cardSuits=['♠','♠'];activeCard=1;updateCards();
-  renderPositions();renderSeatRows();syncScenario();
+  renderPositions();renderStacks();renderSeatRows();syncScenario();
   try{localStorage.setItem(FORMAT_KEY,key)}catch(_){}
   hideSetup();form.hidden=true;
  }
@@ -66,7 +116,7 @@ function init(){
    b.type='button';b.setAttribute('aria-pressed',String(heroPos.value===pos));b.classList.toggle('active',heroPos.value===pos);
    b.addEventListener('click',()=>{
     heroPos.value=pos;refreshVillain();
-    renderPositions();renderSeatRows();syncScenario();
+    renderPositions();renderStacks();renderSeatRows();syncScenario();
    });
    box.append(b);
   }
@@ -139,8 +189,11 @@ function init(){
   input.value=digits(input.value);
   const v=tenth(input.value);
   $('bb-caption').textContent=Number.isFinite(v)?decimal(v)+' BB':'– BB';
-  for(const s of states.values())if(!s.customStack){s.stack=Math.round(Math.max(0.1,v||20)*10);if(s.action==='allin')s.bet=s.stack;}
-  renderSeatRows();syncScenario();
+  for(const pos of seats()){
+   const old=seatStacks.get(pos);
+   if(pos!==heroPos.value&&(!old||!old.custom))setStack(pos,Math.max(.1,v||20),false);
+  }
+  renderStacks();renderSeatRows();syncScenario();
  }
  $('quick-bb').addEventListener('input',updateBb);
  $('quick-bb').addEventListener('blur',()=>{if(!Number.isFinite(heroBB())||heroBB()<=0){$('quick-bb').value='200';updateBb()}});
@@ -166,7 +219,7 @@ function init(){
    return;
   }
   for(const pos of positions){
-   const s=getState(side,pos);
+   const s=getState(side,pos);s.stack=Math.round(getStack(pos)*10);
    const card=el('div','quick-seat quick-seat-inline','');card.dataset.seat=pos;
    const row=el('div','quick-seat-line','');
    const position=el('strong','quick-seat-position',pos);
@@ -211,8 +264,9 @@ function init(){
     const stackValue=el('span','quick-digits-value',decimal(s.stack/10)+' BB');
     stack.addEventListener('input',()=>{
      stack.value=digits(stack.value);s.stack=Number(stack.value);s.customStack=true;
+     const next=tenth(stack.value);if(Number.isFinite(next)&&next>=.1)setStack(pos,next,true);
      if(s.action==='allin')s.bet=s.stack;
-     stackValue.textContent=decimal(s.stack/10)+' BB';syncScenario();
+     stackValue.textContent=decimal(s.stack/10)+' BB';renderStacks();syncScenario();
     });
     stackGroup.append(stack,stackValue);fields.append(stackGroup);
     card.append(fields);
@@ -248,7 +302,7 @@ function init(){
   $('heroChips').value=String(Math.max(1,Math.round(stack*lvl)));
   const before=mode==='before',side=modeSide();
   const positions=applicableSeats();
-  const involved=positions.map(pos=>({pos,...getState(side,pos)})).filter(s=>s.action!=='fold');
+  const involved=positions.map(pos=>({pos,...getState(side,pos),stack:mask(getStack(pos))})).filter(s=>s.action!=='fold');
   const ownRaise=tenth($('quick-own-bet').value)||2.2;
   const prior=involved.filter(s=>s.action==='raise'||s.action==='allin');
   let problem='',next='RFI',vPos='',vStack=stack,vBet=2.2;
@@ -276,16 +330,20 @@ function init(){
   $('villainChips').value=String(Math.max(1,Math.round(vStack*lvl)));
   $('openBB').value=String(Math.max(1.5,before?vBet:ownRaise));
   $('threebetBB').value=String(Math.max(3.5,vBet));
+  const completeStacks=Object.fromEntries(seats().filter(x=>x!==hero).map(pos=>[pos,getStack(pos)]));
   const scenario=involved.length?{
    mode:before?'before':'after',
    heroStackBB:stack,
    ownRaiseBB:before?0:ownRaise,
+   seatStacks:completeStacks,
    actions:involved.map(x=>({
     position:x.pos,action:x.action,
     betBB:x.bet/10,stackBB:x.stack/10
    }))
   }:null;
   window.LernPokerScenario=null;
+  window.LernPokerTrainingState={mode:before?'before':'after',heroStackBB:stack,seatStacks:completeStacks,scenario,
+    cards:[{rank:cardRanks[0],suit:cardSuits[0]},{rank:cardRanks[1],suit:cardSuits[1]}]};
   if(!problem&&scenario){
    try{
     if(!window.LernPokerMultiway)throw Error('Mehrspieler-Rechenmodul ist nicht geladen.');
@@ -301,18 +359,65 @@ function init(){
     ' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):
     'Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
  }
+ // Explicitly-confirmed voice inputs can fill the same regular touch controls.
+ window.LernPokerUI={
+  applyVoiceDraft(draft){
+   if(!draft||typeof draft!=='object')return {ok:false,message:'Keine Angaben erkannt.'};
+   const hasContent=Boolean(draft.position||draft.stackBB||draft.cards?.length||draft.actions?.length||
+     Object.keys(draft.seatStacks||{}).length);
+   if(!hasContent)return {ok:false,message:'Keine unterstützte Angabe erkannt.'};
+   if(draft.position&&seats().includes(draft.position)){
+    heroPos.value=draft.position;refreshVillain();
+   }
+   if(draft.stackBB!=null){
+    const value=Number(draft.stackBB);
+    if(!Number.isFinite(value)||value<.1||value>1000)return {ok:false,message:'Stack außerhalb des erlaubten Bereichs.'};
+    $('quick-bb').value=mask(value);updateBb();
+   }
+   if(draft.cards?.length===2){
+    const two=draft.cards;
+    if(two[0].rank===two[1].rank&&two[0].suit===two[1].suit)
+     return {ok:false,message:'Dieselbe Karte wurde zweimal genannt.'};
+    cardRanks=[two[0].rank,two[1].rank];cardSuits=[two[0].suit,two[1].suit];activeCard=1;updateCards();
+   }
+   for(const [pos,value] of Object.entries(draft.seatStacks||{}))
+    if(pos!==heroPos.value&&seats().includes(pos))setStack(pos,Number(value),true);
+   if(draft.ownRaiseBB!=null){
+    const value=Number(draft.ownRaiseBB);
+    if(Number.isFinite(value)&&value>=1.5&&value<heroBB())$('quick-own-bet').value=mask(value);
+   }
+   if(draft.actions?.length){
+    mode=draft.mode==='after'?'after':'before';
+    for(const pos of seats())for(const side of ['before','after'])getState(side,pos).action='fold';
+    for(const e of draft.actions){
+     if(!seats().includes(e.position)||e.position===heroPos.value)continue;
+     const side=mode==='after'?'after':'before',seat=getState(side,e.position);
+     seat.action=e.action;
+     if(e.stackBB!=null)setStack(e.position,Number(e.stackBB),true);
+     seat.stack=mask(getStack(e.position));
+     if(e.action==='allin')seat.bet=seat.stack;
+     else if(e.betBB!=null&&Number.isFinite(Number(e.betBB)))seat.bet=mask(Number(e.betBB));
+     else if(e.action==='call')seat.bet=10;
+     else if(e.action==='raise')seat.bet=mode==='after'?75:22;
+    }
+   }else if(draft.mode==='after')mode='after';
+   renderPositions();renderStacks();renderSeatRows();syncScenario();
+   return {ok:true};
+  }
+ };
+
  // Profilwahl und Einstellungswechsel synchron halten.
  $('level').addEventListener('change',syncScenario);
- $('players').addEventListener('change',()=>{renderPositions();renderSeatRows();syncScenario()});
+ $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
  $('heroChips').addEventListener('change',()=>{$('quick-bb').value=mask(Number($('heroChips').value)/ownBB());updateBb()});
- $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();renderPositions();renderSeatRows();syncScenario()});
+ $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();renderPositions();renderStacks();renderSeatRows();syncScenario()});
  // Die Oberfläche bleibt kompakt; die ursprünglichen Felder sind in "Weitere Angaben".
  new MutationObserver(()=>{if(!form.hidden)form.hidden=true}).observe(form,{attributes:true,attributeFilter:['hidden']});
  nav.addEventListener('click',()=>setTimeout(()=>{form.hidden=true},0));
  form.hidden=true;
  const stored=(()=>{try{return localStorage.getItem(FORMAT_KEY)}catch(_){return null}})();
  if(stored&&D.profiles[stored])setProfile(stored);
- else {renderPositions();renderSeatRows();updateCards();syncScenario();showSetup();}
+ else {renderPositions();renderStacks();renderSeatRows();updateCards();syncScenario();showSetup();}
 }
 window.addEventListener('DOMContentLoaded',init);
 })();

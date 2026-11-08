@@ -33,8 +33,11 @@ function inspect(data,inputs,scenario){
  const heroAlready=stage==='after'?Number(scenario.ownRaiseBB):blind(hero);
  if(!Number.isFinite(heroAlready)||heroAlready<blind(hero)||heroAlready>heroCap)throw Error('Eigener Einsatz ungültig.');
  const state=new Map();
+ const suppliedStacks=scenario?.seatStacks||{};
  for(const pos of positions){
-  state.set(pos,{pos,bet:blind(pos),stack:heroStack,action:stage==='after'?'fold':positions.indexOf(pos)>index?'pending':'fold'});
+  const st=pos===hero?heroStack:Number(suppliedStacks[pos]??heroStack);
+  if(!Number.isFinite(st)||st<1||st>1000)throw Error(pos+': Stack muss zwischen 1 und 1000 BB liegen.');
+  state.set(pos,{pos,bet:blind(pos),stack:st,action:stage==='after'?'fold':positions.indexOf(pos)>index?'pending':'fold'});
  }
  const used=new Set();
  let top=stage==='after'?heroAlready:1;
@@ -47,7 +50,7 @@ function inspect(data,inputs,scenario){
   const seat=state.get(e.position);
   seat.action=e.action;
   if(e.action==='fold')continue;
-  seat.stack=Number(e.stackBB);
+  seat.stack=Number(e.stackBB??seat.stack);
   if(!Number.isFinite(seat.stack)||seat.stack<1||seat.stack>1000)throw Error('Gegnerstack ungültig.');
   const maximum=Math.max(blind(seat.pos),seat.stack-aBB);
   seat.bet=e.action==='allin'?maximum:Number(e.betBB);
@@ -64,7 +67,7 @@ function inspect(data,inputs,scenario){
  if(active.length===0&&stage==='after')throw Error('Alle folden nach deinem Raise – keine weitere Entscheidung.');
  if(active.length===0&&hero==='BB'&&stage==='before')throw Error('Alle folden zum Big Blind – kein weiterer Zug.');
  if(stage==='after'&&needs)throw Error('Nach deinem Raise liegt keine Erhöhung vor – keine neue Entscheidung.');
- if(active.length===0)throw Error('Keine aktive gegnerische Aktion.');
+ // Beim ungeöffneten Pot bleiben künftige Gegner als pending enthalten.
  if(heroCap<Math.min(top,heroCap)-1e-7)throw Error('Einsatz über maximalem Stack.');
  const pot=positions.reduce((sum,pos)=>{
   const seat=state.get(pos);
@@ -268,7 +271,7 @@ function computeMatrix(data,inputs,scenario){
    notes:'Multiway Chip-EV Näherungsmodell, nicht GTO'};
  return {context,spot:'MULTI',hands,frequencies,comboCounts,handOrder:allKeys};
 }
-const api={inspect,possibleActions,actionDistribution,computeMatrix,layers};
+const api={inspect,possibleActions,actionDistribution,computeMatrix,layers,calcHand};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else global.LernPokerMultiway=api;
 })(globalThis);
