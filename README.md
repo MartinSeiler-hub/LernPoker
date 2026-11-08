@@ -16,6 +16,16 @@ Die mobile Lernapp basiert auf einem vereinfachten Chip-EV-Modell mit den drei T
 
 Ohne GitHub-Pages-Aktivierung ist der Quellcode zwar im Repository, aber die App-URL noch nicht erreichbar. Die Daten werden lokal verarbeitet; keine Pokerplattform-Schnittstelle.
 
-## Bedienung auf dem Handy (Version 2)
+## Bedienung auf dem Handy (Version 3)
 
-Beim ersten Start wird einmalig das Turnierprofil A, B oder C ausgewählt und lokal gespeichert. Danach ist die Standardansicht bewusst kompakt: eigener Stack in **BB mit einer Nachkommastelle** (Komma oder Punkt), zwei Karten mit einzeln wählbarem Rang und Symbol, eigene Position und vorherige Aktion. Blindlevel, Gegnerstack und ICM-Optionen sind unter **Weitere Angaben** verfügbar. Die Turnierformat-Auswahl ist später nur über **⚙ Turnierformat ändern** im Kopfbereich erreichbar. Die Eingabe der BB wird automatisch in Chips umgerechnet, mit dem eingestellten Blindlevel als Bezugsgröße. Ohne angegebenen Gegnerstack wird derselbe Stack wie bei Hero angenommen. Die App und beide neuen UI-Dateien werden durch den Service Worker für Offline-Lernen gespeichert.
+- Beim ersten Start einmal Turnierprofil A, B oder C wählen; die Auswahl wird gespeichert.
+- **Position direkt antippen:** UTG, HJ, CO, BTN, SB, BB usw. Kein Dropdown mehr für die eigene Position.
+- **Stack in Zehntel-BB:** Nur Ziffern eingeben. Die letzte Stelle steht automatisch hinter dem Komma: `154` = 15,4 BB, `800` = 80,0 BB. Die App zeigt den formatierten Wert daneben und rechnet intern in Chips um.
+- **Starthand über Tasten:** Zuerst den Rang für Karte 1, dann Karte 2 antippen. Anschließend `gleiche Farbe (s)` oder `verschieden (o)`; bei Paaren entfällt diese Wahl. Die konkrete Kartenfarbe (Pik/Herz/Karo/Kreuz) wird für die 169 Preflop-Handklassen nicht benötigt.
+- **Aktionen je Position:** `Alle folden`, `Aktionen vor mir` oder `Nach meinem Raise`. Nach Auswahl einer Position Fold, Call/Limp, Raise/3-Bet oder All-in wählen. Bei aktiven Spielern Gesamteinsatz und Startstack in BB (ebenfalls Zehntel-BB-Eingabe) erfassen.
+- **Modellgrenze:** Die bisherige mathematische Engine wertet nur einen aktiven Heads-up-Gegner aus. Für mehrere eingestiegene Spieler, Limp-Pots, 3-Bet-All-ins nach eigenem Open und komplexere Raise-Folgen zeigt die App ausdrücklich **keine verlässliche Empfehlung**, statt solche Szenarien fälschlich als Heads-up zu bewerten. Das reine Erfassen dieser Situationen ist bereits möglich.
+- Blindlevel, Spielerzahl, ICM und Gegnermodell befinden sich weiterhin unter **Weitere Angaben**.
+- Über `⚙ Turnierformat ändern` lässt sich das Profil später wechseln.
+- Das Quiz ist deaktiviert, wenn das eingegebene Szenario noch nicht durch das Modell unterstützt wird.
+
+**Hinweis zur echten Pokerpraxis:** Bei Online-Poker gelten gegebenenfalls Regeln gegen Real-Time Assistance. Die App ist als Lern- und Nachanalysewerkzeug außerhalb laufender Hände gedacht.
