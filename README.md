@@ -64,3 +64,22 @@ Die normale Lernoberfläche konzentriert sich vorerst **nur auf Preflop-Chip-EV*
 
 
 **Modellgrenzen:** Das „optimale“ Raise-Sizing wird **nicht** durch einen vollständigen GTO-Solver ermittelt. Die Rangewahl, zukünftige Fold-/Call-Entscheidungen, Multiway-Equities und die Postflop-Verläufe sind weiterhin vereinfachte Modelle. Die Ausgaben sind zum Lernen außerhalb laufender Online-Poker-Hände vorgesehen.
+
+
+## 6-Max-Mischstrategie und Blufftraining (V9)
+
+Im ersten Schritt erhält **nur die Tischgröße 6-Max** eine gemischte Handlungsempfehlung. Die fixe Kopfzeile zeigt eine **einmal je Situation gezogene Aktion**. Die Ziehung bleibt bei Wiederholungs-Renderings stabil. „Neu ziehen“ erzeugt eine andere Ziehung anhand derselben Gewichte. Direkt darunter erscheint eine horizontal scrollbar kompakte Zeile der vollständigen Aktion-/Raisegrößen-Mischung, z. B. \`3-Bet auf 5,5 BB 19 % · Fold 18 % · Call 17 % · …\`.
+
+Die Entscheidung berücksichtigt neben Call und Fold **legal verfügbare 33-/50-/75-/100-%-Pot-Raises** und ggf. All-ins. Die Potgröße und die Raisegrößen stammen aus den vorhandenen Modellrechnungen. Für bestimmte suited Ace-Wheel-Hände (A2s–A5s) und einige geeignete King-suited-Hände werden spätpositionsbezogene **3-Bet-Bluffkandidaten** geprüft. Eine tatsächlich gezogene aggressive Aktion kann z. B. als \`3-Bet-Bluff auf 5,5 BB\` erscheinen.
+
+### Wichtig: Diese Wahrscheinlichkeiten sind NICHT solverbestätigte GTO-Frequenzen
+
+Die ausgewiesenen Prozentwerte sind ein **EV-gewichteter Trainingsmix**: Die vereinfachte Mehrspieler-Chip-EV-Schätzung bewertet die Aktionen und erlaubten Raisegrößen, anschließend werden nahe Varianten mit einer expliziten Temperatur- und Priorregel gewichtet. Die Normalisierung ergibt 100 %. Das ist mathematisch nachvollziehbares, aber **nicht gleichgewichtslösendes** Verhalten. Es gibt bisher **keinen Nachweis geringer Exploitability**. Die Entscheidung bleibt eine experimentelle Trainingsstrategie, nicht ein professioneller GTO-Chart.
+
+Die verteilten Raisegrößen sind *Gesamteinsätze in Big Blinds*. Für RFI wird ein freier Limp aus frühen Positionen bewusst nicht als regulärer Mixkandidat betrachtet, weil das bisherige vereinfachte Modell solche schwachen Hände zu häufig gelimpt hat; SB-Limps sind weiterhin möglich. Andere Tischgrößen behalten die bisherige deterministische Empfehlung.
+
+Die Funktion ist für den ausdrücklich vereinbarten **privaten Pokerabend ohne Geldeinsatz** sowie das Lernen und die Nachanalyse außerhalb laufender Online-Poker-Hände vorgesehen. Es erfolgt weder eine Verbindung zu einer Pokerplattform noch eine automatische Handlung am Tisch. Die Prozentwerte und der Bluffhinweis sind keine Erfolgsgarantie.
+
+### Nächste wissenschaftliche Validierung
+
+Die jeweilige gemischte Rangetabelle und der EV-Regret müssen durch echte 6-Max-Preflop-Solverstrategien bei den relevanten effektiven Stacks und Antes ersetzt oder gegen solche Strategien kalibriert werden. Erst mit Solverreferenzen und Best-Response-/Regret-Tests lässt sich die angestrebte GTO-Nähe sinnvoll messen.
