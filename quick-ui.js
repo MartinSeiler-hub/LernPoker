@@ -359,6 +359,53 @@ function init(){
     ' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):
     'Alle vor dir folden · '+hero+' · '+decimal(stack)+' BB.';
  }
+ // Explicitly-confirmed voice inputs can fill the same regular touch controls.
+ window.LernPokerUI={
+  applyVoiceDraft(draft){
+   if(!draft||typeof draft!=='object')return {ok:false,message:'Keine Angaben erkannt.'};
+   const hasContent=Boolean(draft.position||draft.stackBB||draft.cards?.length||draft.actions?.length||
+     Object.keys(draft.seatStacks||{}).length);
+   if(!hasContent)return {ok:false,message:'Keine unterstützte Angabe erkannt.'};
+   if(draft.position&&seats().includes(draft.position)){
+    heroPos.value=draft.position;refreshVillain();
+   }
+   if(draft.stackBB!=null){
+    const value=Number(draft.stackBB);
+    if(!Number.isFinite(value)||value<.1||value>1000)return {ok:false,message:'Stack außerhalb des erlaubten Bereichs.'};
+    $('quick-bb').value=mask(value);updateBb();
+   }
+   if(draft.cards?.length===2){
+    const two=draft.cards;
+    if(two[0].rank===two[1].rank&&two[0].suit===two[1].suit)
+     return {ok:false,message:'Dieselbe Karte wurde zweimal genannt.'};
+    cardRanks=[two[0].rank,two[1].rank];cardSuits=[two[0].suit,two[1].suit];activeCard=1;updateCards();
+   }
+   for(const [pos,value] of Object.entries(draft.seatStacks||{}))
+    if(pos!==heroPos.value&&seats().includes(pos))setStack(pos,Number(value),true);
+   if(draft.ownRaiseBB!=null){
+    const value=Number(draft.ownRaiseBB);
+    if(Number.isFinite(value)&&value>=1.5&&value<heroBB())$('quick-own-bet').value=mask(value);
+   }
+   if(draft.actions?.length){
+    mode=draft.mode==='after'?'after':'before';
+    for(const pos of seats())for(const side of ['before','after'])getState(side,pos).action='fold';
+    for(const e of draft.actions){
+     if(!seats().includes(e.position)||e.position===heroPos.value)continue;
+     const side=mode==='after'?'after':'before',seat=getState(side,e.position);
+     seat.action=e.action;
+     if(e.stackBB!=null)setStack(e.position,Number(e.stackBB),true);
+     seat.stack=mask(getStack(e.position));
+     if(e.action==='allin')seat.bet=seat.stack;
+     else if(e.betBB!=null&&Number.isFinite(Number(e.betBB)))seat.bet=mask(Number(e.betBB));
+     else if(e.action==='call')seat.bet=10;
+     else if(e.action==='raise')seat.bet=mode==='after'?75:22;
+    }
+   }else if(draft.mode==='after')mode='after';
+   renderPositions();renderStacks();renderSeatRows();syncScenario();
+   return {ok:true};
+  }
+ };
+
  // Profilwahl und Einstellungswechsel synchron halten.
  $('level').addEventListener('change',syncScenario);
  $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
