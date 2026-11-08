@@ -14,7 +14,7 @@ function init(){
  const form=document.querySelector('.form-panel'),picker=$('quick-picker'),nav=document.querySelector('.nav-mobile');
  if(!form||!picker||!nav||!window.PokerModel)return;
  const edit=el('button','', '⚙ Turnierformat ändern');edit.type='button';edit.id='change-tournament';document.querySelector('header').appendChild(edit);
- const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten · 2-$-MTT</span></button></div></div>');
+ const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten</span></button></div></div>');
  welcome.id='format-setup';welcome.hidden=true;welcome.setAttribute('role','dialog');welcome.setAttribute('aria-modal','true');document.body.appendChild(welcome);
  const mobilePick=picker.querySelector('.mobile-pick');
  const stackBox=el('div','quick-stack','<label for="quick-bb">Mein Stack · BB</label><div class="quick-stack-line"><input id="quick-bb" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="5" aria-describedby="bb-caption bb-example" value="800"><strong id="bb-caption">80,0 BB</strong></div><small id="bb-example">Nur Ziffern: 154 ergibt 15,4 BB; 80 ergibt 8,0 BB.</small>');
@@ -40,7 +40,7 @@ function init(){
  const icmNav=nav.querySelector('button[data-tab="icm"]');
  if(icmNav)icmNav.remove();
  for(const id of ['profile','spot','heroChips','villainChips','villainPos','openBB','threebetBB','heroPos']){$(id).closest('.group').hidden=true;}
- advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Das Rechenmodell verwendet geschätzte Chip-EV-Strategien und ist keine vollständig gelöste GTO-Strategie. Mehrere aktive Gegner und komplexe Action-Trees werden noch nicht vollständig unterstützt. Nur zum Lernen und zur Nachanalyse außerhalb laufender Online-Partien.</p></details>'));
+ advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Die Empfehlungen nutzen ein vereinfachtes Chip-EV-Modell mit angenommener Gegnertaktik und Multiway-Equity, kein exakter GTO-Solver. Einsatz- und Stackangaben werden verwendet; Preisgelder und ICM bleiben in dieser Lernversion deaktiviert. Die Mikrofonfunktion kann je nach Browser eine Internetverbindung erfordern und verarbeitet Sprache über die Browser-Spracherkennung. Nur für Lern- und Nachanalysezwecke außerhalb laufender Online-Partien.</p></details>'));
  const accent=document.querySelector('.panel.accent');
  const block=el('div','quick-limit','');block.id='quick-range-limit';accent.querySelector('h2').after(block);
  const seats=()=>PokerModel.POSITIONS[Number($('players').value)]||[];
