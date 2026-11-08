@@ -245,9 +245,14 @@ function computeMatrix(data,inputs,scenario){
   const referencePct=ctx.active.length?ctx.active.reduce((s,pos)=>{
     const p=ctx.all.find(x=>x.pos===pos);return s+villainRange(ctx,p,false);
    },0)/ctx.active.length:0;
+  const approximateShowdownEquity=ctx.active.reduce((product,pos)=>{
+   const actor=ctx.all.find(x=>x.pos===pos);
+   return product*M.equityAgainst(data.equities,key,villainRange(ctx,actor,false));
+  },1);
   hands[key]={key,action:best.action,ev:best.ev,alternatives,backup:fallback,
    weight:M.handWeight(key),power:strength.score,percentile:strength.percentile,
-   referencePct,showdownEq:eq,potBefore:ctx.pot,callCost:Math.max(0,ctx.top-ctx.heroAlready),
+   referencePct,showdownEq:approximateShowdownEquity,eqRealized:eq,
+   potBefore:ctx.pot,callCost:Math.max(0,ctx.top-ctx.heroAlready),
    notes:['Berechnete Chip-Einsätze/Sidepot-Stufen; gegnerische Ranges und Multiway-Equity geschätzt',
       'Equity gegen mehrere Gegner als Produkt bedingter Heads-up-Equities angenähert',
       'Gegnerreaktionen unabhängig; Postflop-Spielbaum und ICM nicht vollständig gelöst']};
