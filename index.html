@@ -88,11 +88,10 @@ header h1{font-size:24px}header .sub{font-size:12px}
 <section class="panel"><h2>3 · Blindverlauf und Stack-Druck</h2><p class="note">Zeitangaben sind rechnerische Levelanfänge ohne Pausen. Für Profil A und B sind nur die acht bestätigten Level enthalten; fehlende Werte werden nicht extrapoliert.</p>
 <div class="table-wrap"><table id="blindtable"><thead><tr><th>Level</th><th>SB / BB</th><th>Ante / Spieler</th><th>Ante gesamt (BB)</th><th>Startstack (BB)</th><th>Beginn ohne Pausen</th></tr></thead><tbody></tbody></table></div>
 </section>
-<div class="two-col extra-panel"><section class="panel"><h2>4 · Preisgeld &amp; Entries</h2><div class="controls" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="group"><label for="entries">Entries inkl. Re-Entries</label><input id="entries" type="number" min="1" value="65"></div><div class="group"><label for="prizePaid">Bezahlte Plätze (aktuell)</label><input id="prizePaid" type="number" min="1" value="10"></div></div><div id="poolResult" class="hint"></div><p class="note">Wichtig: Ohne offizielle Auszahlungstabelle für die gewählte Entry-Zahl lässt sich die Preisstaffel nicht eindeutig rekonstruieren. Änderungen sind nur Szenarien.</p><details open><summary>Letzte bekannte Preisverteilung (65 Entries)</summary><div class="table-wrap" style="max-height:335px"><table id="prizetable"><thead><tr><th>Platz</th><th>Preis (€)</th><th>Anteil am Snapshot</th></tr></thead><tbody></tbody></table></div></details></section>
-<section class="panel"><h2>5 · Exaktes ICM für 2–10 Spieler</h2><p class="note">Nur verwenden, wenn wirklich nur diese Spieler um die angegebenen Plätze spielen. Ein Table-Snapshot bei 50 verbleibenden Spielern ist <b>kein</b> exaktes Turnier-ICM.</p>
+<div class="two-col extra-panel"><section class="panel"><h2>ICM – spätere Ausbaustufe</h2><p class="note">Nur verwenden, wenn wirklich nur diese Spieler um die angegebenen Plätze spielen. Ein Table-Snapshot bei 50 verbleibenden Spielern ist <b>kein</b> exaktes Turnier-ICM.</p>
 <div class="icm-form"><div class="group"><label for="icmStacks">Stacks aller verbleibenden Spieler</label><textarea id="icmStacks">30000,26000,22000,18000,15000,12000,9000,8000,5000</textarea></div><div class="group"><label for="icmPayouts">Preise Platz 1–N in €</label><textarea id="icmPayouts">175.60,147.37,123.69,103.83,87.15,73.15,61.40,51.54,43.25</textarea></div><div class="group"><label for="icmHero">Hero Sitz (1–N)</label><input id="icmHero" type="number" min="1" max="10" value="8"></div><div class="group"><label for="icmVillain">All-in-Gegner (1–N)</label><input id="icmVillain" type="number" min="1" max="10" value="9"></div></div>
 <div class="actions-row"><button class="btn primary" id="runICM">ICM / Call-Schwelle rechnen</button></div><div id="icmResult"></div></section></div>
-<section class="panel extra-panel"><h2>6 · Transparenz und Grenzen</h2>
+<section class="panel extra-panel"><h2>Transparenz und Grenzen</h2>
 <details open><summary>Was wird tatsächlich berechnet?</summary><p class="note">Der C++-Evaluator berechnet per Monte Carlo die reine Preflop-Showdown-Equity jeder Handklasse gegen neun nach einer offen gelegten Chen-Heuristik sortierte Gegnerranges. Er verwendet pro Hand und Range 16.000 simulierte Boards mit reproduzierbarem Zufallsseed. Das zugrunde liegende Potmodell vergleicht Aktionen anhand angenommener gegnerischer Foldwahrscheinlichkeiten und rabattierter Equity-Realisierung. Eröffnungsfrequenzen und zulässige Bluff-/Value-3-Bets werden als <b>explizite strategische Nebenbedingungen</b> gesetzt – sie sind keine vom Monte-Carlo-Solver gefundenen Gleichgewichte.</p></details>
 <details><summary>Welche Unsicherheit bleibt?</summary><p class="note">Bei 16.000 unabhängigen Simulationen je Hand/Range liegt der rein statistische Standardfehler bei 50 % Equity höchstens bei etwa 0,40 Prozentpunkten. Die wesentlich größere Unsicherheit entsteht durch angenommene Ranges, das vereinfachte Postflop-Modell und die Beschränkung auf einen Caller. Multiway-Pots, bet sizes jenseits der Eingaben, Spielerunterschiede, ICM außerhalb der gesonderten Berechnung, Re-Entry-Entscheidungen, Late-Registration-Effekte und der Early-Bird-Bubble-Schutz sind nicht als vollständiger Spielbaum abgebildet.</p></details>
 <details><summary>Warum sind die Handaktionen keine GTO-Mischfrequenzen?</summary><p class="note">Die Matrix wählt je Hand die beste Aktion unter begrenzten, explizit modellierten Möglichkeiten; diese Wahl ist ein geschätzter Best Response gegen angenommene Gegner. Eine reale GTO-Frequenz pro Hand müsste durch einen Preflop-/Postflop-Solver für das vollständige Action-Tree und passende Stackverteilungen berechnet werden. Daher zeigt jede Zelle <b>eine Modellentscheidung</b>, keine unbewiesene 50/50-Mischfrequenz.</p></details>
@@ -372,7 +371,6 @@ function computeMatrix(data,inputs){
  const frequencies={};for(const [k,v] of Object.entries(comboCounts))frequencies[k]=100*v/1326;
  return {context:ctx,spot,hands,frequencies,comboCounts,handOrder:handKeys()};
 }
-function payoutPool(p,entries){if(!p.buyin_to_pool_usd)return null;return Math.max(p.guarantee_usd||0,p.buyin_to_pool_usd*entries);}
 // ICM exakt via subset dynamic programming bis n=10 für Preisgeld ab Platz 1 im verbleibenden Feld.
 function icmExact(stacks,payouts){
  const n=stacks.length;if(n<2||n>10)throw Error('ICM: 2–10 verbleibende Spieler');
@@ -413,7 +411,7 @@ function icmCallDecision(params){
  const icmThreshold=(f-l)/(w-l),chipThreshold=risk/(dead+2*risk);
  return {icmThreshold,chipThreshold,riskPremium:icmThreshold-chipThreshold,heroEquityFold:f,heroEquityWin:w,heroEquityLose:l,risk,dead,stacksIfFold:fold,stacksIfWin:win,stacksIfLose:lose};
 }
-const api={RANKS,POSITIONS,PALETTE,PROFILE_STYLES,handKey,handKeys,handWeight,handInfo,equityAgainst,baseOpenTarget,strengthOrder,getContext,computeMatrix,icmExact,icmCallDecision,payoutPool};
+const api={RANKS,POSITIONS,PALETTE,PROFILE_STYLES,handKey,handKeys,handWeight,handInfo,equityAgainst,baseOpenTarget,strengthOrder,getContext,computeMatrix,icmExact,icmCallDecision};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else global.PokerModel=api;
 })(globalThis);
 </script>
@@ -434,7 +432,6 @@ function init(){
  by('spot').addEventListener('change',()=>{refreshSeats(true);render()});
  for(const id of ['heroChips','villainChips','openBB','threebetBB'])by(id).addEventListener('input',debounce(render,180));
  by('copyChart').addEventListener('click',copyCsv);by('copyText').addEventListener('click',copyCompact);by('printChart').addEventListener('click',()=>window.print());
- by('entries').addEventListener('input',updatePool);by('prizePaid').addEventListener('input',updatePool);
  by('runICM').addEventListener('click',()=>{runICM();render()});
  by('useICM').addEventListener('change',render);runICM();
 }
@@ -444,10 +441,9 @@ function setupProfile(initial){
  const lvl=p.levels.some(x=>x.level===currentLvl)?currentLvl:1;
  htmlOptions(by('level'),p.levels.map(l=>[l.level,`Level ${l.level} · ${l.sb}/${l.bb}`]),lvl);
  by('heroChips').value=p.startstack;by('villainChips').value=p.startstack;
- by('entries').value=p.payout_entries||p.prize_entries_snapshot||65;by('prizePaid').value=p.prize_count_snapshot||10;
  prevPlayers=p.tablesize;
  htmlOptions(by('players'),Array.from({length:p.finaltable?8:7},(_,i)=>{const n=i+2;return [n,`${n} Spieler${n===p.finaltable?' (Finaltisch)':''}`]}),p.tablesize);
- refreshSeats(true);lastProfile=key;updatePool();render();
+ refreshSeats(true);lastProfile=key;render();
 }
 function refreshSeats(useDefaults){
  const seats=M.POSITIONS[+by('players').value],spot=by('spot').value;
@@ -545,18 +541,6 @@ async function writeClipboard(text){
 function copyCsv(){if(current)writeClipboard(chartCSV())}
 function copyCompact(){if(!current)return;let z={};for(const [k,h] of Object.entries(current.hands)){if(!z[h.action])z[h.action]=[];z[h.action].push(k)};
  writeClipboard(Object.entries(z).map(([k,v])=>k+': '+v.join(' ')).join('\n'));
-}
-function updatePool(){const p=D.profiles[by('profile').value],N=Math.max(1,+by('entries').value||1),paid=+by('prizePaid').value||0;
- let html=`<b>Entries: ${fmt(N,0)}</b> · eingegebene bezahlte Plätze: ${paid}<br>`;
- const pool=M.payoutPool(p,N);
- if(pool!=null){const fees=p.buyin_to_pool_usd*N;
-   if(p.guarantee_usd)html+=`Garantierter/errechneter Preispool: <b>${fmt(pool,2)} $</b> · Beiträge: ${fmt(fees,2)} $ · Garantiedifferenz: ${fmt(Math.max(0,pool-fees),2)} $.`;
-   else html+=`Preisgeldbeiträge: <b>${fmt(fees,2)} $</b>. Gesamtpreispool nicht bekannt, weil die Garantie nicht vorliegt.`;
- }
- else html+='Keine ausreichenden Angaben für einen garantierten Preispool.';
- if(p.payouts){const known=N===p.payout_entries&&paid===p.payouts.length;html+=`<br>${known?'Aktuelle bekannte Auszahlung:':'Die hier dokumentierte Auszahlung ist bei dieser Entry-Zahl NICHT bestätigt:'} <b>${fmt(p.payouts.reduce((a,b)=>a+b,0),2)} €</b> auf ${p.payouts.length} Plätze (Snapshot bei ${p.payout_entries} Entries).`}
- by('poolResult').innerHTML=html;
- by('prizetable').querySelector('tbody').innerHTML=(p.payouts||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${fmt(x,2)} €</td><td>${pct(x/(p.payouts.reduce((a,b)=>a+b,0))*100,2)}</td></tr>`).join('')||'<tr><td colspan="3">Preisgeldstaffel unbekannt</td></tr>';
 }
 function parseNumbers(s){const parts=s.trim().replace(/\s+/g,'').split(/[;\n,]+/).filter(Boolean);const nums=parts.map(s=>Number(s));if(nums.some(x=>!Number.isFinite(x)))throw Error('Nur Zahlen, durch Komma getrennt. Dezimalpunkt für Eurobeträge verwenden.');return nums;}
 function runICM(){
