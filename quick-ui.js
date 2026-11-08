@@ -2,7 +2,8 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const RANKS='AKQJT98765432', FORMAT_KEY='LernPokerTournament_v2';
-let mode='rfi', activeCard=1, cardRanks=['A','K'], suited='s', editingSeat='', currentStatus='';
+const SUITS=[{symbol:'♠',name:'Pik'},{symbol:'♥',name:'Herz'},{symbol:'♦',name:'Karo'},{symbol:'♣',name:'Kreuz'}];
+let mode='rfi', activeCard=1, cardRanks=['A','K'], cardSuits=['♠','♠'], editingSeat='', currentStatus='';
 const states=new Map();
 const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!==undefined)x.innerHTML=html;return x;};
 const decimal=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -13,7 +14,7 @@ function init(){
  const form=document.querySelector('.form-panel'),picker=$('quick-picker'),nav=document.querySelector('.nav-mobile');
  if(!form||!picker||!nav||!window.PokerModel)return;
  const edit=el('button','', '⚙ Turnierformat ändern');edit.type='button';edit.id='change-tournament';document.querySelector('header').appendChild(edit);
- const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten · 2-$-MTT</span></button></div><p class="note">Nur für das Training außerhalb laufender Online-Partien. Kein exakter GTO-Solver.</p></div>');
+ const welcome=el('section','', '<div class="setup-card"><h2>♠ Turnierformat auswählen</h2><p>Einmal wählen – danach bleibt die Schnell-Eingabe für Zugfahrten im Vordergrund.</p><div class="setup-choices"><button data-profile="A"><b>8 Spieler · 100 BB</b><span>10.000 Chips · 8 Minuten</span></button><button data-profile="B"><b>6 Spieler · 100 BB</b><span>10.000 Chips · 5 Minuten</span></button><button data-profile="C"><b>8 Spieler · 80 BB</b><span>8.000 Chips · 5 Minuten · 2-$-MTT</span></button></div></div>');
  welcome.id='format-setup';welcome.hidden=true;welcome.setAttribute('role','dialog');welcome.setAttribute('aria-modal','true');document.body.appendChild(welcome);
  const mobilePick=picker.querySelector('.mobile-pick');
  const stackBox=el('div','quick-stack','<label for="quick-bb">Mein Stack · BB</label><div class="quick-stack-line"><input id="quick-bb" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="5" aria-describedby="bb-caption bb-example" value="800"><strong id="bb-caption">80,0 BB</strong></div><small id="bb-example">Nur Ziffern: 154 ergibt 15,4 BB; 80 ergibt 8,0 BB.</small>');
@@ -22,13 +23,13 @@ function init(){
  const positionBox=el('section','quick-section','<h3>Meine Position</h3><div id="quick-position-buttons" class="quick-position-buttons" role="group" aria-label="Meine Position"></div>');
  stackBox.after(positionBox);
  mobilePick.hidden=true;
- const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1: A</button><button id="card-two" type="button">Karte 2: K</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert wählen"></div><div class="quick-suit-buttons" role="group" aria-label="Gleiche Farbe"><button id="quick-suited" type="button">Gleiche Farbe (s)</button><button id="quick-offsuit" type="button">Verschieden (o)</button></div>');
+ const cards=el('section','quick-section','<h3>Meine Karten</h3><div id="quick-card-display" class="quick-card-display"><button id="card-one" class="quick-current" type="button">Karte 1 · A♠</button><button id="card-two" type="button">Karte 2 · K♠</button></div><div id="quick-ranks" class="quick-rank-buttons" role="group" aria-label="Kartenwert für ausgewählte Karte wählen"></div><div class="quick-suit-buttons" id="quick-suits" role="group" aria-label="Farbe für ausgewählte Karte wählen"></div>');
  mobilePick.before(cards);
  const action=el('section','quick-section','<h3>Aktionen in dieser Hand</h3><div class="quick-mode-buttons" role="group" aria-label="Situation"><button type="button" data-mode="rfi">Alle folden</button><button type="button" data-mode="before">Aktionen vor mir</button><button type="button" data-mode="after">Nach meinem Raise</button></div><div id="quick-action-instructions" class="quick-note"></div><div id="quick-own-raise" hidden><label for="quick-own-bet">Meine Eröffnung · Gesamtbetrag in BB</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div><div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
  const advanced=el('details','', '<summary>Weitere Angaben · Level, Tischgröße, ICM</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
  for(const id of ['profile','spot','heroChips','villainChips','villainPos','openBB','threebetBB','heroPos']){$(id).closest('.group').hidden=true;}
- picker.append(el('p','quick-note','Strategie nur als Trainingsmodell: Die Handranges sind Schätzungen, nicht exakt berechnetes GTO. Bei Multiway-, Limp- oder mehrfachen Raise-Situationen wird keine falsche Heads-up-Empfehlung gezeigt.'));
+ advanced.append(el('details','quick-methodology','<summary>Methodik und Nutzung</summary><p>Das Rechenmodell verwendet geschätzte Chip-EV-Strategien und ist keine vollständig gelöste GTO-Strategie. Mehrere aktive Gegner und komplexe Action-Trees werden noch nicht vollständig unterstützt. Nur zum Lernen und zur Nachanalyse außerhalb laufender Online-Partien.</p></details>'));
  const accent=document.querySelector('.panel.accent');
  const block=el('div','quick-limit','');block.id='quick-range-limit';accent.querySelector('h2').after(block);
  const seats=()=>PokerModel.POSITIONS[Number($('players').value)]||[];
@@ -47,7 +48,7 @@ function init(){
   $('profile').value=key;$('level').value='1';setupProfile(false);
   states.clear();mode='rfi';editingSeat='';
   $('quick-bb').value=mask(D.profiles[key].startstack/ownBB());
-  cardRanks=['A','K'];suited='s';activeCard=1;updateCards();
+  cardRanks=['A','K'];cardSuits=['♠','♠'];activeCard=1;updateCards();
   renderPositions();renderSeatRows();syncScenario();
   try{localStorage.setItem(FORMAT_KEY,key)}catch(_){}
   hideSetup();form.hidden=true;
@@ -66,41 +67,68 @@ function init(){
    box.append(b);
   }
  }
- function updateCards(){
-  $('q-r1').value=cardRanks[0];$('q-r2').value=cardRanks[1];
-  $('q-s').value=cardRanks[0]===cardRanks[1]?'o':suited;
-  $('q-s').dispatchEvent(new Event('change',{bubbles:true}));
-  $('card-one').textContent='Karte 1: '+cardRanks[0];
-  $('card-two').textContent='Karte 2: '+cardRanks[1];
-  for(const [n,id] of [[1,'card-one'],[2,'card-two']]){
-   $('card-one').classList.toggle('quick-current',activeCard===1);
-   $('card-two').classList.toggle('quick-current',activeCard===2);
+
+ function avoidDuplicate(changedIndex){
+  if(cardRanks[0]===cardRanks[1]&&cardSuits[0]===cardSuits[1]){
+   const other=1-changedIndex;
+   cardSuits[changedIndex]=SUITS.find(s=>s.symbol!==cardSuits[other]).symbol;
   }
-  const isPair=cardRanks[0]===cardRanks[1];
-  $('quick-suited').disabled=isPair;$('quick-offsuit').disabled=isPair;
-  $('quick-suited').classList.toggle('active',!isPair&&suited==='s');
-  $('quick-offsuit').classList.toggle('active',!isPair&&suited==='o');
-  $('q-selected').textContent=selectedHand+(isPair?' · Paar':suited==='s'?' · gleiche Farbe':' · verschiedene Farben');
+ }
+ function updateCards(){
+  avoidDuplicate(activeCard-1);
+  $('q-r1').value=cardRanks[0];$('q-r2').value=cardRanks[1];
+  $('q-s').value=cardRanks[0]!==cardRanks[1]&&cardSuits[0]===cardSuits[1]?'s':'o';
+  // Die bestehende 169-Hand-Auswertung nutzt weiterhin Rank + suited/offsuit intern.
+  $('q-s').dispatchEvent(new Event('change',{bubbles:true}));
+  for(let i=0;i<2;i++){
+   const b=$(i===0?'card-one':'card-two');
+   b.textContent='Karte '+(i+1)+' · '+cardRanks[i]+cardSuits[i];
+   b.classList.toggle('quick-current',activeCard===i+1);
+   b.classList.toggle('quick-red-suit',cardSuits[i]==='♥'||cardSuits[i]==='♦');
+   b.setAttribute('aria-pressed',String(activeCard===i+1));
+  }
+  for(const b of $('quick-suits').querySelectorAll('button')){
+   const symbol=b.dataset.suit;
+   const samePhysicalCard=cardRanks[0]===cardRanks[1] && symbol===cardSuits[2-activeCard];
+   const chosen=cardSuits[activeCard-1]===symbol;
+   b.disabled=samePhysicalCard;
+   b.classList.toggle('active',chosen);
+   b.setAttribute('aria-pressed',String(chosen));
+  }
+  $('q-selected').textContent=cardRanks[0]+cardSuits[0]+'   '+cardRanks[1]+cardSuits[1]+'   ·   '+selectedHand;
  }
  for(const r of RANKS){
   const b=el('button','',r);b.type='button';b.addEventListener('click',()=>{
-   cardRanks[activeCard-1]=r;activeCard=activeCard===1?2:1;
-   updateCards();
+   const index=activeCard-1;
+   cardRanks[index]=r;avoidDuplicate(index);updateCards();
   });$('quick-ranks').append(b);
+ }
+ for(const suit of SUITS){
+  const b=el('button','quick-suit-choice',suit.symbol);
+  b.type='button';b.dataset.suit=suit.symbol;
+  b.classList.toggle('quick-red-suit',suit.symbol==='♥'||suit.symbol==='♦');
+  b.title=suit.name;
+  b.setAttribute('aria-label',suit.name+' für Karte '+activeCard);
+  b.addEventListener('click',()=>{
+   const i=activeCard-1;
+   if(cardRanks[0]===cardRanks[1] && cardSuits[1-i]===suit.symbol)return;
+   cardSuits[i]=suit.symbol;
+   if(activeCard===1)activeCard=2;
+   updateCards();
+  });
+  $('quick-suits').append(b);
  }
  $('card-one').addEventListener('click',()=>{activeCard=1;updateCards()});
  $('card-two').addEventListener('click',()=>{activeCard=2;updateCards()});
-
- // Auswahl aus der 169-Hand-Matrix in die Zwei-Karten-Tasten übernehmen.
+ // Klick in die 169-Hand-Matrix stellt auch die physischen Kartensymbole ein.
  $('matrix').addEventListener('click',e=>{
   const cell=e.target.closest('.cell');if(!cell)return;
   const h=(cell.textContent||'').trim();
   if(!/^[AKQJT98765432]{2}[so]?$/.test(h))return;
-  cardRanks=[h[0],h[1]];suited=h.endsWith('s')?'s':'o';activeCard=1;updateCards();
+  cardRanks=[h[0],h[1]];
+  cardSuits=h.endsWith('s')?['♠','♠']:['♠','♥'];
+  activeCard=1;updateCards();
  });
-
- $('quick-suited').addEventListener('click',()=>{suited='s';updateCards()});
- $('quick-offsuit').addEventListener('click',()=>{suited='o';updateCards()});
  function updateBb(){
   const input=$('quick-bb');
   input.value=digits(input.value);
@@ -196,17 +224,17 @@ function init(){
   if(mode!=='rfi'){
     if(!applicableSeats().length)problem='Vor bzw. hinter dieser Position gibt es keine entsprechenden Akteure.';
     if(involved.some(s=>s.stack<1||s.stack>10000||s.bet<=0||s.bet>s.stack))problem='Mindestens ein Spieler hat einen ungültigen Stack oder Einsatz (Einsatz darf Stack nicht überschreiten).';
-    if(involved.length>1)problem='Mehrere Spieler sind eingestiegen. Dieses Modell unterstützt keine Multiway-Pots, Sidepots oder mehrfachen Raises. Deshalb keine verlässliche Handlungsempfehlung.';
+    if(involved.length>1)problem='Für mehrere aktive Gegner ist hier noch keine Empfehlung verfügbar.';
     if(involved.length===1){
       const v=involved[0];vPos=v.pos;vBet=v.action==='allin'?v.stack/10:v.bet/10;vStack=v.stack/10;
       if(Math.min(stack,vStack)<2)problem='Effektiver Stack unter 2 BB: die vorhandene Engine kann diesen Fall nicht zuverlässig abbilden.';
       if(before){
         if(v.action==='raise'){next='OPEN';if(vBet<1.5)problem='Ein Raise muss mindestens auf 1,5 BB gehen.';}
         else if(v.action==='allin'){next='JAM';}
-        else problem='Limp-/Call-Pots können im vorhandenen Heads-up-Modell noch nicht zuverlässig bewertet werden.';
+        else problem='Für Limp-/Call-Pots ist noch keine Empfehlung verfügbar.';
       }else{
         if(v.action==='raise'){next='3BET';if(vBet<=ownRaise||vBet<3.5)problem='Die 3-Bet muss höher als deine Eröffnung sein und mindestens 3,5 BB betragen (Modellgrenze).';}
-        else problem='Call oder All-in nach deinem eigenen Raise ist noch kein unterstützter isolierter 3-Bet-Fall.';
+        else problem='Für diese Folgeaktion ist noch keine Empfehlung verfügbar.';
       }
     }else if(involved.length===0){
       if(mode==='after')problem='Nach deinem Raise folden alle: Es besteht keine weitere Preflop-Entscheidung.';
@@ -225,7 +253,7 @@ function init(){
   if(!problem)blocked('');
   if(mode==='rfi')summary.textContent='Alle folden · '+hero+' · '+decimal(stack)+' BB eigener Stack.';
   else summary.textContent=involved.length?involved.map(v=>v.pos+': '+({call:'Call/Limp',raise:mode==='after'?'3-Bet':'Raise',allin:'All-in'}[v.action])+' '+decimal((v.action==='allin'?v.stack:v.bet)/10)+' BB · Stack '+decimal(v.stack/10)+' BB').join(' | '):'Alle gewählten Positionen folden.';
-  if(problem)summary.textContent=problem+' '+summary.textContent;
+  // Die Meldung erscheint nur am Ergebnisfeld; nicht doppelt in der Aktionsübersicht.
  }
  // Profilwahl und Einstellungswechsel synchron halten.
  $('level').addEventListener('change',syncScenario);
