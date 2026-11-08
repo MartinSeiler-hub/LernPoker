@@ -91,8 +91,18 @@ function villainRange(Mctx,seat,followedRaise){
 }
 function continueProb(ctx,seat,target,aggressive){
  if(seat.action==='allin' || seat.bet>=seat.stack-ctx.aBB-.001)return 1;
- if(!aggressive)return seat.action==='pending'?
-    clip((seat.pos==='BB'?.36:seat.pos==='SB'?.21:.12)*(ctx.opponentStyle==='loose'?1.3:ctx.opponentStyle==='tight'?.7:1),.03,.68):1;
+ if(!aggressive){
+   if(seat.action==='pending')
+    return clip((seat.pos==='BB'?.36:seat.pos==='SB'?.21:.12)*(ctx.opponentStyle==='loose'?1.3:ctx.opponentStyle==='tight'?.7:1),.03,.68);
+   if(seat.bet<ctx.top-1e-5){
+    // An earlier limper/caller/opener has not yet faced the latest raise.
+    const extra=Math.max(0,Math.min(ctx.top,seat.stack-ctx.aBB)-seat.bet);
+    const price=extra/Math.max(.01,ctx.pot+extra);
+    const chance=(seat.action==='raise'?.78:.54)*(ctx.opponentStyle==='loose'?1.2:ctx.opponentStyle==='tight'?.78:1);
+    return clip(chance+(price<.15?.12:price>.32?-.18:0),.08,.99);
+   }
+   return 1;
+  }
  const ratio=target/Math.max(1,seat.bet);
  let p=seat.action==='raise'?.64:seat.action==='call'?.47:seat.action==='pending'?
     seat.pos==='BB'?.35:seat.pos==='SB'?.23:.15:.5;
@@ -158,7 +168,7 @@ function actionDistribution(ctx,option){
    const bet=s.pos===ctx.hero ? option.bet :
       !keep?s.bet :
         option.aggressive?Math.max(s.bet,Math.min(option.bet,s.stack-ctx.aBB)):
-          s.action==='pending'?Math.max(s.bet,Math.min(ctx.top,s.stack-ctx.aBB)):s.bet;
+          (s.action==='pending'||s.bet<ctx.top)?Math.max(s.bet,Math.min(ctx.top,s.stack-ctx.aBB)):s.bet;
    return {pos:s.pos,amount:ctx.aBB+Math.max(0,bet)};
   });
   // Existing contributions of folded players stay in the pot, as dead money.
