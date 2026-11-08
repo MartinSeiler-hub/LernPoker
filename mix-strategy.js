@@ -1,4 +1,4 @@
-/* LernPoker 6-max training mixture (model weights, NOT solver/GTO frequencies).
+/* LernPoker 6-/8-max training mixture (model weights, NOT solver/GTO frequencies).
  * Compares actions in a common simplified chip-EV approximation, then applies
  * bounded EV-weighted sampling with an explicit shared sizing prior.
  */
@@ -18,7 +18,8 @@ function bluffCandidate(hand,ctx){
   return seat&&(seat.action==='raise'||seat.action==='allin');
  });
  if(!open||ctx.heroStack<14||ctx.heroStack>65)return false;
- const late=['HJ','CO','BTN','SB','BB'].includes(ctx.hero);
+ const late=ctx.playerCount===8?['CO','BTN','SB','BB'].includes(ctx.hero):['HJ','CO','BTN','SB','BB'].includes(ctx.hero);
+ if(ctx.playerCount===8&&ctx.active.length>1)return false;
  return late&&(WHEEL.has(hand) || (['BTN','SB','BB'].includes(ctx.hero)&&KING.has(hand)));
 }
 function scenarioFor(training){
@@ -27,7 +28,8 @@ function scenarioFor(training){
  return {mode:'before',heroStackBB:heroStack,seatStacks:training?.seatStacks||{},actions:[]};
 }
 function calculate(data,inputs,training,hand,baseHand){
- if(Number(inputs.players)!==6)return {enabled:false,reason:'Mischstrategie derzeit nur am 6-Max-Tisch'};
+ const players=Number(inputs.players);
+ if(![6,8].includes(players))return {enabled:false,reason:'Mischstrategie derzeit für 6-Max und 8-Max'};
  if(!M.handKeys().includes(hand))return {enabled:false,reason:'Unbekannte Handklasse'};
  const scenario=scenarioFor(training);
  let ctx;
@@ -58,13 +60,13 @@ function calculate(data,inputs,training,hand,baseHand){
  const alt=baseHand?.alternatives||{};
  const isUnopened=!active&&ctx.stage==='before';
  const strength=M.strengthOrder(data.equities,ctx.heroStack)[hand];
- const openLimit=M.baseOpenTarget(6,ctx.hero,ctx.heroStack,6*ctx.aBB);
+ const openLimit=M.baseOpenTarget(players,ctx.hero,ctx.heroStack,players*ctx.aBB);
  const openAllowed=isUnopened && ctx.hero!=='BB' && strength.percentile<=openLimit && !baseHand?.limitedByOpenRange;
  const raiseLabel=ctx.stage==='after'?'4BET':ctx.top>1.01?'3BET':'RAISE';
  const supported=Object.hasOwn(alt,raiseLabel)&&Number(alt[raiseLabel])>-1e5;
  const capByStage=ctx.stage==='after'?bluff&&WHEEL.has(hand):bluff;
  // At very short stacks, a non-all-in re-raise usually leaves a misleading
- // tiny remainder. Restrict 6-max response to jams/calls/folds below 13 BB.
+ // tiny remainder. Restrict short-stack responses to jams/calls/folds below 13 BB.
  const shortReRaise=ctx.heroStack<13 && ctx.top>1.01;
  const canRaise=!shortReRaise && (isUnopened?openAllowed:(supported||capByStage));
  let sizes={options:[]};
