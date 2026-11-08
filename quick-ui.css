@@ -182,3 +182,35 @@
 
 /* Drei Navigationsreiter, nicht fixiert */
 .nav-mobile{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+
+
+/* V9: compact 6-max mixed action/size recommendation */
+#quick-sticky-recommendation .quick-rec-line{gap:8px;flex-wrap:wrap}
+#quick-mix-reroll{
+ background:#253e56;color:#fff2d9;border:1px solid #b08b50;
+ border-radius:8px;padding:5px 8px;min-height:35px;
+ font:700 11px system-ui;white-space:nowrap;cursor:pointer
+}
+#quick-mix-reroll[hidden],#quick-rec-mix[hidden]{display:none!important}
+#quick-mix-reroll:focus-visible{outline:3px solid #ffe09b;outline-offset:2px}
+#quick-rec-mix{
+ display:flex;align-items:center;gap:5px;overflow-x:auto;
+ scrollbar-width:thin;scrollbar-color:#b48b4d #223447;
+ padding:5px 0 3px;white-space:nowrap
+}
+.quick-mix-option{
+ display:inline-block;flex:0 0 auto;padding:3px 6px;
+ background:#1d3750;border:1px solid #4d6786;
+ border-radius:7px;color:#dbeaff;font-size:11px;line-height:1.45
+}
+.quick-mix-option.chosen{
+ color:#ffe2a4;border-color:#e0ad62;background:#403820;font-weight:800
+}
+@media(max-width:450px){
+ #quick-sticky-recommendation{padding:7px 8px;min-height:55px}
+ #quick-rec-hand{font-size:16px}
+ #quick-rec-action{font-size:17px;flex:1;min-width:140px}
+ #quick-mix-reroll{min-height:32px;font-size:10px;padding:4px 6px}
+ .quick-mix-option{font-size:10px}
+ .quick-rec-detail{font-size:10px}
+}
