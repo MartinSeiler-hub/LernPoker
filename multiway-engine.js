@@ -95,11 +95,18 @@ function continueProb(ctx,seat,target,aggressive){
  const ratio=target/Math.max(1,seat.bet);
  let p=seat.action==='raise'?.64:seat.action==='call'?.47:seat.action==='pending'?
     seat.pos==='BB'?.35:seat.pos==='SB'?.23:.15:.5;
+ const extra=Math.max(0,Math.min(target,seat.stack-ctx.aBB)-seat.bet);
+ const price=extra/Math.max(.01,ctx.pot+extra);
  const stackFactor=clip((seat.stack-ctx.aBB-seat.bet)/Math.max(.5,seat.stack),.06,1);
  p*=clip(1.12-.21*Math.log2(Math.max(1,ratio)),.22,1.12);
  p*=ctx.opponentStyle==='loose'?1.28:ctx.opponentStyle==='tight'?.73:1;
  p*=clip(.65+.4*stackFactor,.55,1.1);
- return clip(p,.015,.97);
+ // A player who has already committed almost all their chips generally
+ // cannot be assumed to fold to a tiny additional raise.
+ if(price<.10)p=Math.max(p,.99);
+ else if(price<.18)p=Math.max(p,.91);
+ else if(price<.25)p=Math.max(p,.78);
+ return clip(p,.015,1);
 }
 function layers(contrib,live){
  const amounts=Array.from(new Set(contrib.map(v=>v.amount))).filter(v=>v>0).sort((a,b)=>a-b);
@@ -210,7 +217,7 @@ function computeMatrix(data,inputs,scenario){
    let value=result.ev;
    // Calibrated constraints against erroneous deep-stack jams / ultra-wide 3-bets.
    const info=M.handInfo(key);
-   const topRange=clip(.06+.29/(1+Math.max(0,ctx.active.length-1)),.08,.35);
+   const topRange=clip(.045+.15/(1+Math.max(0,ctx.active.length-1)),.07,.195);
    if(['RAISE','3BET','4BET'].includes(choice.key) && strength.percentile>topRange)
     value=-1e6;
    if(choice.key==='JAM' && ctx.heroStack>18 && strength.percentile>.065)
