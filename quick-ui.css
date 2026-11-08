@@ -114,3 +114,29 @@
  #quick-suits.quick-suit-buttons{gap:6px}
  #quick-suits .quick-suit-choice{min-height:55px;font-size:27px}
 }
+
+
+/* V5: Gegneraktionen ohne Ausklappen, direkt pro Position */
+.quick-action-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}
+.quick-action-header h3{margin:0}
+.quick-reset-fold{min-height:42px;padding:8px 12px;background:#213951;color:#f5f8ff;border:1px solid #6b88a8;border-radius:10px;font:700 13px system-ui;white-space:nowrap;cursor:pointer}
+.quick-reset-fold:active{background:#ad7726}
+.quick-mode-buttons{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:13px}
+.quick-seat-inline{padding:8px 7px}
+.quick-seat-line{display:grid;grid-template-columns:48px minmax(0,1fr);gap:7px;align-items:center}
+.quick-seat-position{font-size:13px;font-weight:850;color:#ffde9a;text-align:center;overflow:hidden}
+.quick-seat-inline .quick-seat-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;min-width:0}
+.quick-seat-inline .quick-seat-choices button{min-width:0;min-height:43px;font-size:11px;line-height:1.15;padding:7px 1px;border-radius:8px;white-space:nowrap}
+.quick-seat-inline .quick-seat-numbers{margin:8px 0 0 55px;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.quick-seat-inline .quick-seat-numbers label{min-width:0;font-size:12px}
+.quick-seat-inline .quick-seat-numbers input{min-height:46px;font-size:18px}
+.quick-seat-empty{font-size:13px;color:#a9bfd5;margin:4px 0}
+.quick-seat-inline .quick-seat-numbers input:focus-visible,.quick-reset-fold:focus-visible{outline:3px solid #ffde93;outline-offset:2px}
+@media(max-width:380px){
+ .quick-seat-inline{padding:7px 5px}
+ .quick-seat-line{grid-template-columns:42px minmax(0,1fr);gap:4px}
+ .quick-seat-position{font-size:12px}
+ .quick-seat-inline .quick-seat-choices{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+ .quick-seat-inline .quick-seat-choices button{font-size:10px;padding:6px 0;min-height:40px}
+ .quick-seat-inline .quick-seat-numbers{margin-left:46px}
+}
