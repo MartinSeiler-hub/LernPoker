@@ -184,7 +184,7 @@ function init(){
       s.bet=previous.reduce((highest,p)=>{
        const v=getState(side,p);
        return v.action==='raise'||v.action==='allin'?Math.max(highest,v.action==='allin'?v.stack:v.bet):highest;
-      },10);
+      },side==='after'?Math.max(10,Number($('quick-own-bet').value)||22):10);
      }
      if(kind==='raise'&&s.bet<(side==='after'?35:20))s.bet=side==='after'?75:22;
      renderSeatRows();syncScenario();
