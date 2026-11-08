@@ -47,9 +47,13 @@ function calculate(data,inputs,training,hand,baseHand){
  const passive=raw.find(x=>x.key==='CALL'||x.key==='CHECK');
  if(passive){
   const baseAct=passive.key==='CHECK'?'CHECK':ctx.top<=1.01&&!active?'LIMP':'CALL';
-  const d=MM.actionDistribution(ctx,passive);
-  const ev=MM.calcHand(ctx,passive,hand,null,d).ev;
-  add(baseAct,passive.bet,ev,baseAct==='LIMP'?.32:1.0,'model');
+  // Do not turn unopened 72o into a voluntary limp from UTG/HJ/CO/BTN.
+  // The simplified model overvalues free flops; SB limps remain available.
+  if(baseAct!=='LIMP'||ctx.hero==='SB'){
+   const d=MM.actionDistribution(ctx,passive);
+   const ev=MM.calcHand(ctx,passive,hand,null,d).ev;
+   add(baseAct,passive.bet,ev,baseAct==='LIMP'?.32:1.0,'model');
+  }
  }
  const alt=baseHand?.alternatives||{};
  const isUnopened=!active&&ctx.stage==='before';
