@@ -74,12 +74,13 @@ function lock(){
 }
 function freezeInputs(){
  const freeze=!!data.active;
- const picker=$('quick-picker'),slot=$('live-input-slot');
+ const picker=$('quick-picker'),slot=$('live-input-slot'),shell=$('live-entry-shell');
  if(!picker)return;
- // Move the original fast input controls into LiveTest: same fields, same state,
- // no duplicate IDs, no tab switch required for cards/positions/stacks/actions.
+ // LiveTest has a dedicated, independently visible entry section.
+ // Never nest the editable controls inside the separately hidden result panel.
  if(tab==='live'&&slot&&picker.parentNode!==slot)slot.appendChild(picker);
  else if(tab!=='live'&&pickerHome?.parentNode&&picker.previousSibling!==pickerHome)pickerHome.after(picker);
+ if(shell)shell.hidden=tab!=='live'||freeze;
  picker.classList.toggle('live-inputs-frozen',freeze);
  picker.hidden=tab==='live'?freeze:!['trainer','matrix'].includes(tab);
  const controlList=[...picker.querySelectorAll('button,input,select,textarea'),$('change-tournament')].filter(Boolean);
@@ -211,6 +212,11 @@ function render(){
  $('live-test').hidden=!live;
  const unlocked=$('live-prep'),locked=$('live-locked');
  unlocked.hidden=!!active;locked.hidden=!active;
+ const status=$('live-edit-status');
+ if(status){
+  status.hidden=!active;
+  status.textContent=active?'Diese Hand ist fixiert. Zum Eingeben einer neuen Hand zuerst unten abschließen oder abbrechen.':'';
+ }
  const review=$('live-summary');
  if(review){review.hidden=!!active;if(active)review.open=false;}
  for(const b of document.querySelectorAll('[data-live-max]')){
@@ -251,14 +257,20 @@ function init(){
   '<strong id="live-sticky-action">Hand vorbereiten</strong></div>'+
   '<div id="live-sticky-meta" class="live-sticky-meta"></div>';
  nav.before(sticky);
+ const shell=document.createElement('section');
+ shell.id='live-entry-shell';shell.className='live-entry-shell';shell.hidden=true;
+ shell.innerHTML='<h2>LiveTest · Situation eingeben</h2>'+
+  '<div class="live-format"><span>Spieler am Tisch</span><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+
+  '<div id="live-input-slot"></div>';
+ picker.after(shell);
  const panel=document.createElement('section');panel.className='panel live-panel';panel.id='live-test';panel.hidden=true;
- panel.innerHTML='<h2>LiveTest · privater Tisch</h2>'+ 
-  '<div class="live-format"><span>Spieler am Tisch</span><button type="button" data-live-max="6">6-Max</button><button type="button" data-live-max="8">8-Max</button></div>'+ 
-  '<div id="live-input-slot"></div>'+ 
+ panel.innerHTML='<h2>LiveTest · Empfehlung &amp; Protokoll</h2>'+
   '<div class="live-caption">Privater Test mit Zustimmung aller Beteiligten · ohne Geld · Ergebnisse nur auf diesem Gerät</div>'+
   '<div id="live-prep"><p>Karten, Position, Stacks und Aktionen direkt oben eingeben. Danach eine Empfehlung ziehen und für die Hand fixieren.</p>'+ 
   '<button type="button" id="live-lock" class="btn primary">Empfehlung einmal ziehen und fixieren</button></div>'+
-  '<div id="live-locked" hidden><div id="live-locked-hand" class="live-locked-hand"></div>'+
+  '<div id="live-locked" hidden><div id="live-edit-status" class="live-edit-status"></div>'+
+  '<button type="button" id="live-new-hand" class="btn live-new-hand">Fixierte Hand abbrechen und neue eingeben</button>'+
+  '<div id="live-locked-hand" class="live-locked-hand"></div>'+
   '<div id="live-locked-action" class="live-locked-action"></div><div id="live-locked-situation" class="live-situation"></div>'+
 
   '<div class="live-actual-fields"><label>Tatsächlich gespielt<select id="live-actual">'+
@@ -279,13 +291,14 @@ function init(){
   '<button type="button" id="live-clear" class="btn">Verlauf löschen</button></div>'+
   '<textarea id="live-export-text" hidden readonly></textarea>'+
   '<div id="live-history-list" class="live-history-list"></div></details>';
- picker.after(panel);
- for(const b of panel.querySelectorAll('[data-live-max]')){
+ shell.after(panel);
+ for(const b of shell.querySelectorAll('[data-live-max]')){
   b.addEventListener('click',()=>chooseTable(Number(b.dataset.liveMax)));
  }
  $('live-lock').addEventListener('click',lock);
  $('live-save').addEventListener('click',()=>save('completed'));
  $('live-abort').addEventListener('click',()=>save('aborted'));
+ $('live-new-hand').addEventListener('click',()=>save('aborted'));
  $('live-actual').addEventListener('change',updateActual);
  $('live-copy').addEventListener('click',copyHistory);
  $('live-clear').addEventListener('click',clearHistory);

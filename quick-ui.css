@@ -293,3 +293,23 @@
  .live-format button{flex:1;min-width:0}
  #live-input-slot>.panel#quick-picker{padding:10px 8px}
 }
+
+
+/* V12: independent LiveTest entry surface, not nested in result panel */
+#live-entry-shell[hidden],#live-edit-status[hidden]{display:none!important}
+#live-entry-shell{margin-top:10px;border:1px solid #506b89;border-radius:15px;padding:14px 12px;background:#12263c}
+#live-entry-shell>h2{font-size:19px;margin:2px 0 8px;color:#ffe0a5}
+#live-entry-shell #live-input-slot{display:block;min-height:0}
+#live-entry-shell #quick-picker{display:block;margin:10px 0 0;padding:11px 9px;border:1px solid #526e8f;border-radius:12px;background:#101e30}
+#live-entry-shell #quick-picker[hidden]{display:none!important}
+#live-entry-shell .live-format{margin:8px 0 12px}
+.live-edit-status{color:#fbd8a2;background:#3d3021;border:1px solid #ac7b40;border-radius:10px;padding:9px 11px;margin:9px 0;font-size:13px}
+@media(max-width:420px){
+ #live-entry-shell{padding:10px 7px}
+ #live-entry-shell #quick-picker{padding:9px 7px}
+}
+
+#live-new-hand{display:block;width:100%;min-height:48px;margin:8px 0 12px;
+ background:#674a25;border:1px solid #d4a35b;color:#fff6e7;
+ font:750 13px system-ui;border-radius:9px;cursor:pointer}
+#live-new-hand:focus-visible{outline:3px solid #ffdf97;outline-offset:2px}
