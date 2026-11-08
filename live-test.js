@@ -220,11 +220,10 @@ function render(){
   b.disabled=!!active;
  }
  if(active){
-  $('live-sticky-hand').textContent=active.physicalCards+' · '+active.heroPosition;
+  $('live-sticky-hand').textContent='LiveTest · '+active.players+' Spieler';
   $('live-sticky-action').textContent=showAction(active.picked);
   $('live-sticky-meta').textContent='Hand fixiert · '+active.players+' Spieler';
-  $('live-locked-hand').textContent='Hand '+active.physicalCards+' · '+active.heroPosition+
-    ' · '+numeric(active.stackBB)+' BB';
+  $('live-locked-hand').textContent='Position '+active.heroPosition+' · '+numeric(active.stackBB)+' BB';
   $('live-locked-action').textContent=showAction(active.picked);
   const actors=active.training?.scenario?.actions||[];
   const actorText=actors.length?actors.map(a=>
