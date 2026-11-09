@@ -57,11 +57,13 @@ function init(){
  picker.prepend(liveCards);
  cards.classList.add('quick-original-cards');
  const action=el('section','quick-section',
-  '<div class="quick-action-header"><h3><span class="live-hide">Aktionen der Gegner</span><span class="live-only">Stacks &amp; Aktionen</span></h3><button type="button" id="live-stack-reset" class="live-only">Alle = ich</button><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
+  '<div class="quick-action-header"><h3>Aktionen der Gegner</h3><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
   '<div class="quick-mode-buttons" role="group" aria-label="Aktionsfolge"><button type="button" data-mode="before">Vor meiner Entscheidung</button><button type="button" data-mode="after">Nach meinem Raise</button></div>'+
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
+ const liveOwnStack=el('div','live-only live-own-stack','<div><strong>Mein Stack · BB</strong><small>Gegner = mein Stack · auch All-in</small></div><span id="live-own-stack-choice"></span>');
+ action.before(liveOwnStack);
  const liveError=el('div','live-only live-input-error','');liveError.id='live-input-error';liveError.setAttribute('role','alert');action.append(liveError);
  const advanced=el('details','', '<summary>Weitere Angaben · Blindlevel und Tischgröße</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
  const icmControl=$('useICM');
@@ -75,9 +77,10 @@ function init(){
  const seats=()=>PokerModel.POSITIONS[Number($('players').value)]||[];
  const ownBB=()=>{const p=D.profiles[$('profile').value],l=p.levels.find(x=>x.level===Number($('level').value))||p.levels[0];return l.bb;};
  const heroBB=()=>tenth($('quick-bb').value);
+ let liveEqualStacks=false;
 
  const getStack=pos=>{
-  if(pos===heroPos.value)return heroBB();
+  if(pos===heroPos.value||liveEqualStacks)return heroBB();
   if(!seatStacks.has(pos))seatStacks.set(pos,{stack:Math.round(Math.max(2,heroBB()||20)*10),custom:false});
   return seatStacks.get(pos).stack/10;
  };
@@ -89,18 +92,17 @@ function init(){
   }
  }
  let editingStack=null;
- function openLiveStack(pos){
-   editingStack=pos;
-   const hero=pos===heroPos.value,value=hero?heroBB():getStack(pos),name=hero?'Ich':pos;
+ function openLiveStack(){
+   editingStack=heroPos.value;
+   const value=heroBB(),name='Ich';
    $('live-stack-title').textContent=name+' · Stack in BB';
    const box=$('live-stack-ranges');box.replaceChildren();
    const row=el('div','live-stack-presets','');
    const exact=el('label','live-stack-exact','Exakt · BB');
-   const input=el('input','');input.type='number';input.inputMode='decimal';input.min=hero?'2':'1';input.max='1000';input.step='0.1';
+   const input=el('input','');input.type='number';input.inputMode='decimal';input.min='2';input.max='1000';input.step='0.1';
    input.value=Number.isFinite(value)?String(value):'';input.required=true;input.setAttribute('aria-label',name+' Stack exakt in BB');
    const apply=value=>{
-    if(hero){$('quick-bb').value=mask(value);updateBb();}
-    else {setStack(pos,value,true);renderStacks();renderSeatRows();syncScenario();}
+    $('quick-bb').value=mask(value);updateBb();
     liveStacks.close();
    };
    for(const range of LIVE_STACK_RANGES){
@@ -118,10 +120,10 @@ function init(){
    liveStacks.showModal();
    (row.querySelector('button.active')||row.querySelector('button')).focus();
  }
- function liveStackButton(pos){
-  const b=el('button','live-only live-seat-stack','');b.type='button';b.dataset.position=pos;
+ function liveStackButton(){
+  const b=el('button','live-only live-seat-stack','');b.type='button';b.dataset.position=heroPos.value;
   b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','live-stack-dialog');
-  b.addEventListener('click',()=>openLiveStack(pos));return b;
+  b.addEventListener('click',openLiveStack);return b;
  }
  $('live-stack-close').addEventListener('click',()=>liveStacks.close());
  liveStacks.addEventListener('close',()=>{
@@ -129,7 +131,6 @@ function init(){
   [...picker.querySelectorAll('.live-seat-stack')].find(b=>b.dataset.position===editingStack)?.focus();
   editingStack=null;
  });
- $('live-stack-reset').addEventListener('click',()=>$('quick-stack-reset').click());
  function setStack(pos,value,custom=true){
   if(!seats().includes(pos)||pos===heroPos.value||!Number.isFinite(value)||value<.1||value>1000)return false;
   const st=Math.round(value*10);
@@ -190,7 +191,8 @@ function init(){
  edit.addEventListener('click',showSetup);
  function renderPositions(){
   const box=$('quick-position-buttons');box.innerHTML='';
-  for(const pos of seats()){
+  const positions=seats();
+  for(const pos of liveEqualStacks?[...positions].reverse():positions){
    const b=el('button','quick-position-choice',pos);
    b.type='button';b.setAttribute('aria-pressed',String(heroPos.value===pos));b.classList.toggle('active',heroPos.value===pos);
    b.addEventListener('click',()=>{
@@ -332,19 +334,13 @@ function init(){
  }
  function renderSeatRows(){
   markMode();
+  $('live-own-stack-choice').replaceChildren(liveStackButton());
   const box=$('quick-seats');box.innerHTML='';
   const side=modeSide(),positions=applicableSeats();
   if(positions.length===0){
-   box.append(el('p','quick-seat-empty live-hide',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
+   box.append(el('p','quick-seat-empty',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
   }
-  for(const pos of seats()){
-   if(!positions.includes(pos)){
-    const hero=pos===heroPos.value;
-    const card=el('div','live-only quick-seat quick-seat-inline'+(hero?' live-hero-seat':''),'');card.dataset.seat=pos;
-    const row=el('div','quick-seat-line','');
-    row.append(el('strong','quick-seat-position',pos+(hero?'<small>Ich</small>':'')),liveStackButton(pos),el('span','live-seat-pending',hero?'Mein Stack':mode==='before'?'Noch dran':'Vor meinem Raise'));
-    card.append(row);box.append(card);continue;
-   }
+  for(const pos of positions){
    const s=getState(side,pos);s.stack=Math.round(getStack(pos)*10);
    const card=el('div','quick-seat quick-seat-inline','');card.dataset.seat=pos;
    const row=el('div','quick-seat-line','');
@@ -370,7 +366,7 @@ function init(){
     });
     choices.append(b);
    }
-   row.append(position,liveStackButton(pos),choices);card.append(row);
+   row.append(position,choices);card.append(row);
    if(s.action==='raise'){
     const presets=el('div','live-only live-raise-presets','');
     presets.setAttribute('role','group');presets.setAttribute('aria-label',pos+' Raise auf BB');card.append(presets);
@@ -472,11 +468,12 @@ function init(){
    seatStacks:completeStacks,
    actions:involved.map(x=>({
     position:x.pos,action:x.action,
-    betBB:x.bet/10,stackBB:x.stack/10
+    betBB:(liveEqualStacks&&x.action==='allin'?x.stack:x.bet)/10,stackBB:x.stack/10
    }))
   }:null;
   window.LernPokerScenario=null;
   window.LernPokerTrainingState={mode:before?'before':'after',heroStackBB:stack,seatStacks:completeStacks,scenario,
+    stackAssumption:liveEqualStacks?'hero':null,
     cards:[{rank:cardRanks[0],suit:cardSuits[0]},{rank:cardRanks[1],suit:cardSuits[1]}]};
   if(!problem&&scenario){
    try{
@@ -498,6 +495,12 @@ function init(){
  $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
  $('heroChips').addEventListener('change',()=>{$('quick-bb').value=mask(Number($('heroChips').value)/ownBB());updateBb()});
  $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();renderPositions();renderStacks();renderSeatRows();syncScenario()});
+ window.addEventListener('lernpoker:tabchange',e=>{
+  const equalStacks=e?.detail?.tab==='live';
+  if(equalStacks===liveEqualStacks)return;
+  liveEqualStacks=equalStacks;
+  renderPositions();renderStacks();renderSeatRows();syncScenario();
+ });
  // Die Oberfläche bleibt kompakt; die ursprünglichen Felder sind in "Weitere Angaben".
  new MutationObserver(()=>{if(!form.hidden)form.hidden=true}).observe(form,{attributes:true,attributeFilter:['hidden']});
  nav.addEventListener('click',()=>setTimeout(()=>{form.hidden=true},0));

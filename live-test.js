@@ -42,7 +42,7 @@ function draw(){
 }
 function selection(){
  if(!global.LernPokerMix||typeof selectedInputs!=='function'||typeof selectedHand!=='string')return {error:'Strategie noch nicht geladen'};
- if([...document.querySelectorAll('.live-stack-exact input')].some(input=>!input.checkValidity()))return {error:'Stack prüfen: eigene BB 2–1000, Gegner 1–1000.'};
+ if([...document.querySelectorAll('.live-stack-exact input')].some(input=>!input.checkValidity()))return {error:'Eigenen Stack prüfen: 2–1000 BB.'};
  const inputs=selectedInputs();
  if(![6,8].includes(Number(inputs.players)))return {error:'Bitte 6-Max oder 8-Max wählen.'};
  if(document.querySelector('.panel.accent')?.classList.contains('quick-blocked'))return {error:plain($('quick-range-limit')?.textContent||'Eingaben prüfen.')};
@@ -239,12 +239,13 @@ function render(){
   $('live-locked-hand').textContent='Position '+active.heroPosition+' · '+numeric(active.stackBB)+' BB';
   $('live-locked-action').textContent=showAction(active.picked);
   const actors=active.training?.scenario?.actions||[];
+  const equalStacks=active.training?.stackAssumption==='hero';
   const actorText=actors.length?actors.map(a=>
    a.position+' '+(ACTIONS[a.action]||a.action)+
    (a.action!=='fold'?' '+numeric(a.betBB??a.stackBB)+' BB':'')+
-   (Number.isFinite(a.stackBB)?' (Stack '+numeric(a.stackBB)+' BB)':'')).join(' · '):
+   (!equalStacks&&Number.isFinite(a.stackBB)?' (Stack '+numeric(a.stackBB)+' BB)':'')).join(' · '):
    'Alle vorherigen Positionen folden';
-  $('live-locked-situation').textContent=actorText;
+  $('live-locked-situation').textContent=actorText+(equalStacks?' · Annahme: Gegner = mein Stack (auch All-in).':'');
   // Gewichte und Alternativen bleiben ausschließlich im lokalen Testdatensatz.
   // Die LiveTest-Ansicht zeigt nie die Modellwahrscheinlichkeiten.
  }else{

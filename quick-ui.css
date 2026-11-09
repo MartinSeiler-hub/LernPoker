@@ -357,7 +357,6 @@
 .live-stack-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .live-stack-title h3{font-size:16px;margin:0}
 #live-stack-close{width:36px;min-height:36px;border:1px solid #607c98;border-radius:7px;background:#203851;color:#fff;font-size:17px;cursor:pointer}
-#live-stack-reset{border:1px solid #607c98;background:#203851;color:#e9f3ff;border-radius:7px;min-height:32px;padding:4px 8px;font:650 12px system-ui;cursor:pointer}
 .live-stack-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .live-stack-presets>button{min-height:58px;font-size:17px}
 .live-stack-presets small{display:block;font-size:11px;margin-top:2px;font-weight:500}
@@ -373,14 +372,16 @@
 .live-mode .quick-mode-buttons button{min-height:38px;padding:5px;font-size:12px}
 .live-mode #quick-seats{margin-top:5px;gap:3px}
 .live-mode .quick-seat-inline{padding:3px;border-radius:8px}
-.live-mode .quick-seat-line{grid-template-columns:42px 66px minmax(0,1fr);gap:4px}
+.live-mode .quick-seat-line{grid-template-columns:42px minmax(0,1fr);gap:4px}
 .live-mode .quick-seat-position{font-size:11px}
 .live-mode .quick-seat-position small{display:block;font-size:10px;color:#f1f6ff}
 .live-mode .quick-seat-choices{gap:3px}
 .live-mode .quick-seat-inline .quick-seat-choices button{min-height:38px}
 .live-seat-stack{min-width:0;min-height:38px;padding:3px 0;border:1px solid #6988a9;border-radius:6px;background:#203b57;color:#ffdf9c;font:750 12px system-ui;white-space:nowrap;cursor:pointer;touch-action:manipulation}
-.live-hero-seat{border-color:#d5a45e;background:#293026}
-.live-seat-pending{font:12px system-ui;color:#a9bfd5;padding-left:5px}
+.live-mode .live-own-stack{display:flex!important;align-items:center;justify-content:space-between;gap:10px;margin-top:7px;padding:5px 7px;border:1px solid #d5a45e;border-radius:8px;background:#293026}
+.live-own-stack strong{font-size:13px;color:#ffdf9c}
+.live-own-stack small{display:block;font-size:11px;color:#c5cdd1;margin-top:2px}
+.live-own-stack .live-seat-stack{min-width:100px}
 .live-mode .live-raise-presets{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin-top:4px}
 .live-raise-presets button{min-width:0;min-height:38px;padding:4px 1px;border:1px solid #6988a9;border-radius:6px;background:#203b57;color:#edf5ff;font:700 12px system-ui;white-space:nowrap;cursor:pointer;touch-action:manipulation}
 .live-raise-presets button.active{background:#d49b43;border-color:#ffdc90;color:#101b2a}
