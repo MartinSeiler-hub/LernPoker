@@ -12,6 +12,76 @@ const tenth=v=>{const s=digits(v);return s?Number(s)/10:NaN;};
 const mask=n=>String(Math.round(Number(n)*10));
 // LiveTest presets use explicit representative stacks; exact BB entry remains available.
 const LIVE_STACK_RANGES=[{label:'<10',value:8},{label:'10–20',value:15},{label:'20–30',value:25},{label:'30–50',value:40},{label:'50–80',value:65},{label:'80+',value:100}];
+const LIVE_SITUATIONS=[['fold','Alle folden'],['call','Nur Calls'],['raise','Raise'],['reraise','Re-Raise'],['allin','All-in']];
+const LIVE_ZONES=[['early','Früh'],['middle','Mittel'],['late','Spät']];
+function liveZone(pos,players){
+ if((players===8?['UTG','UTG+1']:['UTG']).includes(pos))return 'early';
+ if((players===8?['MP','HJ']:['HJ']).includes(pos))return 'middle';
+ return 'late';
+}
+// Input adapter only. Unknown seats are explicit representative assumptions;
+// no individual opponent state or strategy module is changed.
+function buildLiveSituation(input){
+ const {players,hero,stack,ante=0,ownRaise=2.2,kind}=input;
+ const after=input.mode==='after',positions=window.PokerModel.POSITIONS[players]||[];
+ const heroIndex=positions.indexOf(hero);
+ const affected=heroIndex<0?[]:after?positions.slice(heroIndex+1):positions.slice(0,heroIndex);
+ const aggressive=['raise','reraise','allin'].includes(kind);
+ const secondRaise=kind==='reraise'&&!after;
+ const eligible=aggressive?affected.filter((p,i)=>!secondRaise||i>0):[];
+ const zones=LIVE_ZONES.map(([key])=>key).filter(key=>eligible.some(p=>liveZone(p,players)===key));
+ const zone=zones.includes(input.zone)?input.zone:zones[0]||null;
+ const candidates=eligible.filter(p=>liveZone(p,players)===zone);
+ const maxCallers=kind==='call'?affected.length:aggressive&&candidates.length?
+  affected.length-affected.indexOf(candidates[0])-1:0;
+ const minCallers=kind==='call'&&maxCallers>0?1:0;
+ const requestedCallers=Math.trunc(Number(input.callers)||0);
+ const callers=kind==='fold'?0:kind==='call'&&requestedCallers===0?1:requestedCallers;
+ const raiser=candidates.filter(p=>affected.length-affected.indexOf(p)-1>=callers).at(-1)||null;
+ const raiserIndex=affected.indexOf(raiser);
+ const opener=secondRaise&&raiserIndex>0?affected[raiserIndex-1]:null;
+ const callerSeats=kind==='call'?affected.slice(affected.length-callers):
+  aggressive&&raiser?affected.slice(raiserIndex+1,raiserIndex+1+callers):[];
+ const cap=stack-ante,initialRaise=after?ownRaise:secondRaise?2.5:1;
+ const minimumRaise=initialRaise>1?Math.round((2*initialRaise-1)*10)/10:2;
+ const raiseTo=Number(input.raiseTo),actions=[];
+ const seatStacks=Object.fromEntries(positions.filter(p=>p!==hero).map(p=>[p,stack]));
+ const result={kind,zone,callers,maxCallers,minCallers,zones,raiser,opener,callerSeats,affected,cap,minimumRaise,initialRaise,
+  scenario:null,summary:'',assumptions:'',error:''};
+ const fail=message=>{result.error=message;return result;};
+ if(![6,8].includes(players)||heroIndex<0)return fail('Tischgröße oder Position prüfen.');
+ if(!LIVE_SITUATIONS.some(([key])=>key===kind))return fail('Situation wählen.');
+ if(!Number.isFinite(stack)||stack<2||stack>1000)return fail('Eigenen Stack prüfen: 2–1000 BB.');
+ if(after&&(!Number.isFinite(ownRaise)||ownRaise<2||ownRaise>=cap))return fail('Eigenen Raise prüfen: mindestens 2 BB und kleiner als dein verfügbarer Stack.');
+ if(!affected.length&&kind!=='fold')return fail(after?'Nach dir sitzt niemand mehr.':'Vor dir hat noch niemand gehandelt.');
+ if(callers<minCallers||callers>maxCallers)return fail('Caller-Anzahl anpassen: hier sind '+minCallers+'–'+maxCallers+' möglich.');
+ if(aggressive&&!raiser)return fail('Für diese Situation fehlen vorherige Spieler.');
+ if(after&&kind==='raise')return fail('Nach deinem Raise bitte Re-Raise oder All-in wählen.');
+ if(['raise','reraise'].includes(kind)){
+  if(!Number.isFinite(raiseTo)||raiseTo<minimumRaise)return fail('Raise auf mindestens '+decimal(minimumRaise)+' BB wählen.');
+  if(raiseTo>=cap-1e-6)return fail('Raise erreicht den angenommenen Stack – All-in wählen.');
+ }
+ const add=(position,action,betBB)=>actions.push({position,action,betBB,stackBB:stack});
+ if(opener)add(opener,'raise',initialRaise);
+ if(raiser)add(raiser,kind==='allin'?'allin':'raise',kind==='allin'?stack:raiseTo);
+ const callTo=kind==='call'?(after?ownRaise:1):kind==='allin'?cap:raiseTo;
+ for(const pos of callerSeats)add(pos,'call',callTo);
+ const label=LIVE_SITUATIONS.find(([key])=>key===kind)[1];
+ const zoneLabel=LIVE_ZONES.find(([key])=>key===zone)?.[1].toLowerCase();
+ result.summary=kind==='fold'?'Alle folden':kind==='call'?callers+' Caller'+(after?' auf deinen Raise':' · kein Raise'):
+  label+' '+(kind==='allin'?decimal(stack):decimal(raiseTo))+' BB · '+zoneLabel+' · '+callers+' Caller danach';
+ const assumed=[];
+ if(opener)assumed.push(opener+' eröffnet auf 2,5 BB');
+ if(raiser)assumed.push((kind==='allin'?'All-in':'Raiser')+' '+raiser);
+ if(callerSeats.length)assumed.push('Caller '+callerSeats.join(', '));
+ result.assumptions=assumed.length?'Angenommen: '+assumed.join(' · ')+'.':'';
+ if(secondRaise)result.assumptions+=' Eine 3-Bet, keine weitere Erhöhung.';
+ result.scenario={mode:after?'after':'before',heroStackBB:stack,ownRaiseBB:after?ownRaise:0,seatStacks,actions};
+ if(after&&['fold','call'].includes(kind))return fail('Keine erneute Erhöhung – keine weitere Entscheidung.');
+ if(!after&&hero==='BB'&&kind==='fold')return fail('Alle folden zum Big Blind – keine weitere Entscheidung.');
+ return result;
+}
+window.LernPokerSituation={build:buildLiveSituation};
 function init(){
  const form=document.querySelector('.form-panel'),picker=$('quick-picker'),nav=document.querySelector('.nav-mobile');
  if(!form||!picker||!nav||!window.PokerModel)return;
@@ -57,13 +127,17 @@ function init(){
  picker.prepend(liveCards);
  cards.classList.add('quick-original-cards');
  const action=el('section','quick-section',
-  '<div class="quick-action-header"><h3>Aktionen der Gegner</h3><button id="quick-all-fold" type="button" class="quick-reset-fold">Alle folden</button></div>'+
+  '<div class="quick-action-header"><h3><span class="live-hide">Aktionen der Gegner</span><span class="live-only">Situation</span></h3><button id="quick-all-fold" type="button" class="quick-reset-fold live-hide">Alle folden</button></div>'+
   '<div class="quick-mode-buttons" role="group" aria-label="Aktionsfolge"><button type="button" data-mode="before">Vor meiner Entscheidung</button><button type="button" data-mode="after">Nach meinem Raise</button></div>'+
   '<div id="quick-own-raise" hidden><label for="quick-own-bet">Mein Raise auf (BB)</label><input id="quick-own-bet" type="text" inputmode="numeric" pattern="[0-9]*" value="22"><span class="quick-digits-value" id="quick-own-value">2,2 BB</span></div>'+
   '<div id="quick-seats" class="quick-seat-list"></div><div id="quick-case-status" role="status" class="quick-case-status"></div>');
  $('q-selected').after(action);
  const liveOwnStack=el('div','live-only live-own-stack','<div><strong>Mein Stack · BB</strong><small>Gegner = mein Stack · auch All-in</small></div><span id="live-own-stack-choice"></span>');
  action.before(liveOwnStack);
+ const liveSituation=el('div','live-only live-situation-input','');liveSituation.id='live-situation-input';
+ $('quick-seats').before(liveSituation);
+ const liveAssumptions=el('p','live-only live-situation-assumptions','');liveAssumptions.id='live-situation-assumptions';
+ liveSituation.after(liveAssumptions);
  const liveError=el('div','live-only live-input-error','');liveError.id='live-input-error';liveError.setAttribute('role','alert');action.append(liveError);
  const advanced=el('details','', '<summary>Weitere Angaben · Blindlevel und Tischgröße</summary>');advanced.id='quick-advanced';advanced.append(form.querySelector('.controls'),$('kpis'),$('model-warning'));picker.append(advanced);
  const icmControl=$('useICM');
@@ -78,6 +152,10 @@ function init(){
  const ownBB=()=>{const p=D.profiles[$('profile').value],l=p.levels.find(x=>x.level===Number($('level').value))||p.levels[0];return l.bb;};
  const heroBB=()=>tenth($('quick-bb').value);
  let liveEqualStacks=false;
+ let liveMode='before';
+ const newSituation=after=>({kind:after?'reraise':'fold',callers:0,zone:after?'late':'middle',raiseBB:2.5,reraiseBB:7.5});
+ const liveSituations={before:newSituation(false),after:newSituation(true)};
+ const situationState=()=>liveSituations[liveMode];
 
  const getStack=pos=>{
   if(pos===heroPos.value||liveEqualStacks)return heroBB();
@@ -181,6 +259,7 @@ function init(){
   if(!D.profiles[key])return;
   $('profile').value=key;$('level').value='1';setupProfile(false);
   states.clear();seatStacks.clear();mode='before';
+  liveMode='before';liveSituations.before=newSituation(false);liveSituations.after=newSituation(true);
   $('quick-bb').value=mask(D.profiles[key].startstack/ownBB());
   cardRanks=['A','K'];cardSuits=['♠','♠'];activeCard=1;updateCards();
   renderPositions();renderStacks();renderSeatRows();syncScenario();
@@ -290,20 +369,81 @@ function init(){
  }
  $('quick-bb').addEventListener('input',updateBb);
  $('quick-bb').addEventListener('blur',()=>{if(!Number.isFinite(heroBB())||heroBB()<=0){$('quick-bb').value='200';updateBb()}});
- function modeSide(){return mode==='after'?'after':'before';}
+ function modeSide(){return liveEqualStacks?liveMode:mode==='after'?'after':'before';}
  function applicableSeats(){
   const i=seats().indexOf(heroPos.value);
   if(i<0)return[];
-  return mode==='after'?seats().slice(i+1):seats().slice(0,i);
+  return modeSide()==='after'?seats().slice(i+1):seats().slice(0,i);
  }
  function markMode(){
   action.querySelectorAll('[data-mode]').forEach(b=>{
-   b.classList.toggle('active',b.dataset.mode===mode);
-   b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+   b.classList.toggle('active',b.dataset.mode===modeSide());
+   b.setAttribute('aria-pressed',String(b.dataset.mode===modeSide()));
   });
-  $('quick-own-raise').hidden=mode!=='after';
+  $('quick-own-raise').hidden=modeSide()!=='after';
+ }
+ function currentLiveSituation(){
+  const s=situationState(),p=D.profiles[$('profile').value];
+  const level=p.levels.find(l=>l.level===Number($('level').value))||p.levels[0];
+  return buildLiveSituation({players:Number($('players').value),hero:heroPos.value,mode:liveMode,stack:heroBB(),
+   ante:level.ante/level.bb,ownRaise:tenth($('quick-own-bet').value),kind:s.kind,zone:s.zone,callers:s.callers,
+   raiseTo:s.kind==='reraise'?s.reraiseBB:s.raiseBB});
+ }
+ function renderLiveSituation(){
+  const s=situationState(),info=currentLiveSituation();
+  s.zone=info.zone||s.zone;s.callers=info.callers;
+  liveSituation.replaceChildren();
+  const choose=()=>{renderLiveSituation();syncScenario();};
+  const group=(name,options,selected,onClick,disabled=()=>false)=>{
+   const box=el('div','live-situation-buttons','');box.setAttribute('role','group');box.setAttribute('aria-label',name);
+   for(const [value,label] of options){
+    const b=el('button','',label);b.type='button';b.dataset.choice=String(value);
+    b.setAttribute('aria-label',name+': '+label);b.classList.toggle('active',value===selected);
+    b.setAttribute('aria-pressed',String(value===selected));b.disabled=disabled(value);
+    b.addEventListener('click',()=>{onClick(value);choose();});box.append(b);
+   }
+   return box;
+  };
+  const choices=LIVE_SITUATIONS.filter(([key])=>liveMode!=='after'||key!=='raise');
+  const situations=group('Situation',choices,s.kind,value=>{s.kind=value;if(value==='call'&&!s.callers)s.callers=1;},
+   value=>value!=='fold'&&(info.affected.length===0||(value==='reraise'&&liveMode==='before'&&info.affected.length<2)));
+  situations.classList.add('live-situation-kinds');liveSituation.append(situations);
+  if(['raise','reraise','allin'].includes(s.kind)){
+   const row=el('div','live-situation-row','<strong>'+(s.kind==='allin'?'All-in aus':'Raiser aus')+'</strong>');
+   const zones=group('Raiser-Position',LIVE_ZONES,s.zone,value=>{s.zone=value;},value=>!info.zones.includes(value));
+   for(const b of zones.children){const key=b.dataset.choice;b.title=seats().filter(p=>liveZone(p,Number($('players').value))===key).join(' · ');}
+   row.append(zones);liveSituation.append(row);
+  }
+  if(s.kind!=='fold'){
+   const row=el('div','live-situation-row','<strong>'+(s.kind==='call'?'Caller':'Caller danach')+'</strong>');
+   const options=Array.from({length:info.maxCallers-info.minCallers+1},(_,i)=>{const n=i+info.minCallers;return[n,String(n)];});
+   row.append(group('Caller-Anzahl',options,s.callers,value=>{s.callers=value;}));liveSituation.append(row);
+  }
+  if(['raise','reraise'].includes(s.kind)){
+   const raised=s.kind==='reraise',field=raised?'reraiseBB':'raiseBB';
+   const values=raised?[2,2.5,3,3.5,4,5].map(f=>Math.round(info.initialRaise*f*10)/10):[2,2.2,2.5,3,4,5];
+   const row=el('div','live-situation-sizing','<strong>'+(raised?'Re-Raise':'Raise')+' auf · BB</strong>');
+   const buttons=group('Raise auf',values.map(v=>[v,v.toLocaleString('de-DE')+' BB']),s[field],value=>{s[field]=value;},
+    value=>value<info.minimumRaise||value>=info.cap-1e-6);
+   buttons.classList.add('live-situation-raises');
+   for(const [i,b] of [...buttons.children].entries())b.dataset.raiseBb=String(values[i]);
+   const exact=el('label','live-situation-exact','Exakt · BB');
+   const input=el('input','');input.type='number';input.inputMode='decimal';input.step='0.1';input.min=String(info.minimumRaise);
+   input.value=Number.isFinite(s[field])?String(s[field]):'';input.setAttribute('aria-label','Gegner-Raise exakt in BB');
+   input.addEventListener('input',()=>{s[field]=input.value===''?NaN:Number(input.value);syncScenario();});
+   exact.append(input);row.append(buttons,exact);liveSituation.append(row);
+  }
+ }
+ function updateLiveSituationFeedback(info){
+  liveAssumptions.textContent=info.assumptions;
+  const s=situationState(),amount=s.kind==='reraise'?s.reraiseBB:s.raiseBB;
+  for(const b of liveSituation.querySelectorAll('[data-raise-bb]')){
+   const selected=Number(b.dataset.raiseBb)===amount;
+   b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));
+  }
  }
  function renderRaisePresets(){
+  if(liveEqualStacks){renderLiveSituation();return;}
   const side=modeSide(),positions=applicableSeats();
   const profile=D.profiles[$('profile').value];
   const level=profile.levels.find(l=>l.level===Number($('level').value))||profile.levels[0];
@@ -336,6 +476,7 @@ function init(){
   markMode();
   $('live-own-stack-choice').replaceChildren(liveStackButton());
   const box=$('quick-seats');box.innerHTML='';
+  if(liveEqualStacks){renderLiveStacks();renderLiveSituation();return;}
   const side=modeSide(),positions=applicableSeats();
   if(positions.length===0){
    box.append(el('p','quick-seat-empty',mode==='after'?'Nach deiner Position sitzt niemand mehr.':'Du bist als Erster an der Reihe.'));
@@ -404,7 +545,8 @@ function init(){
   renderRaisePresets();
  }
  action.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
-  mode=b.dataset.mode;renderSeatRows();syncScenario();
+  if(liveEqualStacks)liveMode=b.dataset.mode;else mode=b.dataset.mode;
+  renderSeatRows();syncScenario();
  }));
  $('quick-all-fold').addEventListener('click',()=>{
   mode='before';
@@ -417,6 +559,8 @@ function init(){
   renderRaisePresets();syncScenario();
  });
  function blocked(message){
+  const liveMessage=$('live-message');
+  if(liveEqualStacks&&message!==currentStatus&&liveMessage?.textContent===currentStatus)liveMessage.textContent='';
   currentStatus=message;accent.classList.toggle('quick-blocked',Boolean(message));
   $('quick-range-limit').textContent=message||'';
   $('live-input-error').textContent=message||'';
@@ -430,16 +574,19 @@ function init(){
    blocked('Ungültiger eigener Stack.');return;
   }
   $('heroChips').value=String(Math.max(1,Math.round(stack*lvl)));
-  const before=mode==='before',side=modeSide();
+  const before=modeSide()==='before',side=modeSide();
   const positions=applicableSeats();
-  const involved=positions.map(pos=>({pos,...getState(side,pos),stack:mask(getStack(pos))})).filter(s=>s.action!=='fold');
+  const simple=liveEqualStacks?currentLiveSituation():null;
+  if(simple)updateLiveSituationFeedback(simple);
+  const involved=simple?(simple.scenario?.actions||[]).map(x=>({pos:x.position,action:x.action,bet:Math.round(x.betBB*10),stack:mask(x.stackBB)})):
+   positions.map(pos=>({pos,...getState(side,pos),stack:mask(getStack(pos))})).filter(s=>s.action!=='fold');
   const ownRaise=tenth($('quick-own-bet').value)||2.2;
   const prior=involved.filter(s=>s.action==='raise'||s.action==='allin');
-  let problem='',next='RFI',vPos='',vStack=stack,vBet=2.2;
+  let problem=simple?.error||'',next='RFI',vPos='',vStack=stack,vBet=2.2;
   if(stack<2)problem='Unter 2 BB ist keine reguläre Preflop-Empfehlung verfügbar.';
-  if(before&&hero==='BB'&&involved.length===0)problem='Alle folden zum Big Blind – keine weitere Entscheidung.';
-  if(!before&&!positions.length)problem='Nach deiner Position sitzt niemand mehr.';
-  if(!before&&!prior.length)problem='Keine erneute Erhöhung – es ist keine zweite Entscheidung erforderlich.';
+  if(!problem&&before&&hero==='BB'&&involved.length===0)problem='Alle folden zum Big Blind – keine weitere Entscheidung.';
+  if(!problem&&!before&&!positions.length)problem='Nach deiner Position sitzt niemand mehr.';
+  if(!problem&&!before&&!prior.length)problem='Keine erneute Erhöhung – es ist keine zweite Entscheidung erforderlich.';
   if(before&&involved.length===0){next='RFI';}
   else if(involved.length){
    // Repräsentative Position für die Anzeige der vorhandenen Felder; die neue
@@ -461,7 +608,7 @@ function init(){
   $('openBB').value=String(Math.max(1.5,before?vBet:ownRaise));
   $('threebetBB').value=String(Math.max(3.5,vBet));
   const completeStacks=Object.fromEntries(seats().filter(x=>x!==hero).map(pos=>[pos,getStack(pos)]));
-  const scenario=involved.length?{
+  const scenario=involved.length?(simple?.scenario||{
    mode:before?'before':'after',
    heroStackBB:stack,
    ownRaiseBB:before?0:ownRaise,
@@ -470,10 +617,11 @@ function init(){
     position:x.pos,action:x.action,
     betBB:(liveEqualStacks&&x.action==='allin'?x.stack:x.bet)/10,stackBB:x.stack/10
    }))
-  }:null;
+  }):null;
   window.LernPokerScenario=null;
   window.LernPokerTrainingState={mode:before?'before':'after',heroStackBB:stack,seatStacks:completeStacks,scenario,
     stackAssumption:liveEqualStacks?'hero':null,
+    situation:simple?{kind:simple.kind,zone:simple.zone,callers:simple.callers,summary:simple.summary,assumptions:simple.assumptions}:null,
     cards:[{rank:cardRanks[0],suit:cardSuits[0]},{rank:cardRanks[1],suit:cardSuits[1]}]};
   if(!problem&&scenario){
    try{
@@ -494,7 +642,7 @@ function init(){
  $('level').addEventListener('change',()=>{renderRaisePresets();syncScenario()});
  $('players').addEventListener('change',()=>{renderPositions();renderStacks();renderSeatRows();syncScenario()});
  $('heroChips').addEventListener('change',()=>{$('quick-bb').value=mask(Number($('heroChips').value)/ownBB());updateBb()});
- $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();renderPositions();renderStacks();renderSeatRows();syncScenario()});
+ $('profile').addEventListener('change',()=>{$('quick-bb').value=mask(D.profiles[$('profile').value].startstack/ownBB());states.clear();seatStacks.clear();liveMode='before';liveSituations.before=newSituation(false);liveSituations.after=newSituation(true);renderPositions();renderStacks();renderSeatRows();syncScenario()});
  window.addEventListener('lernpoker:tabchange',e=>{
   const equalStacks=e?.detail?.tab==='live';
   if(equalStacks===liveEqualStacks)return;

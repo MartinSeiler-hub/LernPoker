@@ -245,7 +245,9 @@ function render(){
    (a.action!=='fold'?' '+numeric(a.betBB??a.stackBB)+' BB':'')+
    (!equalStacks&&Number.isFinite(a.stackBB)?' (Stack '+numeric(a.stackBB)+' BB)':'')).join(' · '):
    'Alle vorherigen Positionen folden';
-  $('live-locked-situation').textContent=actorText+(equalStacks?' · Annahme: Gegner = mein Stack (auch All-in).':'');
+  const situation=active.training?.situation;
+  $('live-locked-situation').textContent=(situation?situation.summary+(situation.assumptions?' · '+situation.assumptions:''):actorText)+
+   (equalStacks?' · Annahme: Gegner = mein Stack (auch All-in).':'');
   // Gewichte und Alternativen bleiben ausschließlich im lokalen Testdatensatz.
   // Die LiveTest-Ansicht zeigt nie die Modellwahrscheinlichkeiten.
  }else{
